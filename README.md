@@ -97,3 +97,22 @@ class SomeAdapter : RecyclerView.Adapter<…>() {
     …
 }
 ```
+
+### ItemDecoration
+
+Decorating different viewTypes is a stressful job. Here's how Delegapter helps you to add spaces between items of certain types:
+
+```kotlin
+data.decor(RecyclerView.VERTICAL) {
+  // keep 16dp after title, before user
+  between({ it === headerDelegate }, { it === userDelegate }, spaceSize = 16f)
+
+  // keep 30dp between any two users
+  between({ it === userDelegate }, spaceSize = 30f)
+  
+  // text units for text items!
+  between({ it === textDelegate }, spaceSize = 16f, spaceUnit = COMPLEX_UNIT_SP)
+}
+```
+
+Predicates like `{ it === headerDelegate }` look clumsy but are very flexible because you can check for several conditions there, for example, match any type (`{ true }`) or check for external conditions (`{ useTextSpaces && it === textDelegate }`).
