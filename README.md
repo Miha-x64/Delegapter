@@ -98,7 +98,7 @@ class SomeAdapter : RecyclerView.Adapter<…>() {
 }
 ```
 
-Apart from skeletal `VHAdapter`, there are two more: `SingleItemAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of use.
+Apart from skeletal `VHAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of use.
 
 ### ItemDecoration
 
