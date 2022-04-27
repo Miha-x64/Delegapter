@@ -46,26 +46,26 @@ In this example, `userDelegate` property guarantees object identity (`::userHold
 
 Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
 
-Delegapter is not an `Adapter` itself, just a special data structure. Basic `Adapter` implementation looks like this:
+Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience:
 
 ```kotlin
-class SomeAdapter : RecyclerView.Adapter<VH<*, *, *>>() {
+class SomeAdapter : VHAdapter<VH<*, *, *>>() {
 
     init { stateRestorationPolicy = … }
 
     private val d = Delegapter(this /* pass self to get notified */)
 
     override fun getItemCount(): Int =
-        data.size
+        d.size
 
     override fun getItemViewType(position: Int): Int =
-        data.viewTypeAt(position)
+        d.viewTypeAt(position)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-        data.createViewHolder(parent, viewType)
+        d.createViewHolder(parent, viewType)
 
-    override fun onBindViewHolder(holder: VH<*, *, *>, position: Int) =
-        data.bindViewHolder(holder, position)
+    override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>): Unit =
+        d.bindViewHolder(holder, position, payloads)
 
     fun update(data: Data) {
         d.clear()
@@ -97,6 +97,8 @@ class SomeAdapter : RecyclerView.Adapter<…>() {
     …
 }
 ```
+
+Apart from skeletal `VHAdapter`, there are two more: `SingleItemAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of use.
 
 ### ItemDecoration
 

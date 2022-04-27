@@ -13,17 +13,18 @@ import kotlin.collections.set
 class MutableDelegapter(
     private val target: ListUpdateCallback,
     parent: MutableDelegapter? = null,
-) : Delegapter() {
+    initialCapacity: Int = -1,
+) : Delegapter(initialCapacity) {
 
-    constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null) :
-        this(AdapterListUpdateCallback(target), parent)
+    constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1) :
+        this(AdapterListUpdateCallback(target), parent, initialCapacity)
 
     private val delegateList: ArrayList<Delegate<*>>
     private val delegateTypes: HashMap<Delegate<*>, Int>
     init {
         if (parent == null) {
-            delegateList = ArrayList()
-            delegateTypes = HashMap()
+            delegateList = newArrayList(initialCapacity)
+            delegateTypes = if (initialCapacity < 0) HashMap() else HashMap(initialCapacity)
         } else {
             delegateList = parent.delegateList
             delegateTypes = parent.delegateTypes
@@ -117,8 +118,8 @@ class MutableDelegapter(
         target.onRemoved(0, size)
     }
 
-    inline fun replace(detectMoves: Boolean = true, block: DiffDelegapter.() -> Unit) {
-        commit(detectMoves, DiffDelegapter().apply(block))
+    inline fun replace(detectMoves: Boolean = true, initialCapacity: Int = -1, block: DiffDelegapter.() -> Unit) {
+        commit(detectMoves, DiffDelegapter(initialCapacity).apply(block))
     }
 
     private var differ: Differ? = null
@@ -130,7 +131,7 @@ class MutableDelegapter(
         tmp.commit()
     }
 
-    inner class DiffDelegapter : Delegapter() {
+    inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
         override fun <D : Any> addAt(index: Int, item: D, delegate: DiffDelegate<in D>): Boolean {
             items.add(index, item)
             itemDelegates.add(index, delegate)
@@ -207,6 +208,11 @@ class MutableDelegapter(
 
     fun bindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any> = emptyList()): Unit =
         @Suppress("UNCHECKED_CAST") (holder as VH<*, *, Any?>).bind(items[position], position, payloads)
+
+    internal fun viewTypeFor(delegate: Delegate<*>): Int {
+        tryAddDelegate(delegate)
+        return delegateTypes[delegate]!!
+    }
 
 }
 

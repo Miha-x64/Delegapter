@@ -6,10 +6,13 @@ import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 
 
-abstract class Delegapter {
+abstract class Delegapter(initialCapacity: Int) {
 
-    @JvmField protected var items = ArrayList<Any?>()
-    @JvmField protected var itemDelegates = ArrayList<Delegate<*>>()
+    @JvmField protected var items: ArrayList<Any?> = newArrayList(initialCapacity)
+    @JvmField protected var itemDelegates: ArrayList<Delegate<*>> = newArrayList(initialCapacity)
+
+    protected fun <E> newArrayList(initialCapacity: Int): ArrayList<E> =
+        if (initialCapacity < 0) ArrayList() else ArrayList(initialCapacity)
 
     // common mutable interface
 
@@ -57,10 +60,15 @@ abstract class Delegapter {
 
 }
 
-fun Delegapter(target: ListUpdateCallback, delegateSource: MutableDelegapter? = null): MutableDelegapter =
-    MutableDelegapter(target, delegateSource)
-fun Delegapter(target: RecyclerView.Adapter<*>, delegateSource: MutableDelegapter? = null): MutableDelegapter =
-    MutableDelegapter(target, delegateSource)
+fun Delegapter(
+    target: ListUpdateCallback, delegateSource: MutableDelegapter? = null, initialCapacity: Int = -1,
+): MutableDelegapter =
+    MutableDelegapter(target, delegateSource, initialCapacity)
+
+fun Delegapter(
+    target: RecyclerView.Adapter<*>, delegateSource: MutableDelegapter? = null, initialCapacity: Int = -1,
+): MutableDelegapter =
+    MutableDelegapter(target, delegateSource, initialCapacity)
 
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 abstract class DiffDelegate<D : Any> : DiffUtil.ItemCallback<D>(), (ViewGroup) -> VH<*, *, D> // Delegate<D>
