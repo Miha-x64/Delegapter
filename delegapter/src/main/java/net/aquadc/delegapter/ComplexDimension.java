@@ -81,4 +81,14 @@ final class ComplexDimension {
             | (radix << TypedValue.COMPLEX_RADIX_SHIFT);
     }
 
+    private static final String[] UNITS = new String[]{
+        "px", "dp", "sp", "pt", "in", "mm"
+    };
+
+    static String toString(int value) {
+        float v = complexToFloat(value);
+        return (((int) v == v) ? Integer.toString((int) v) : Float.toString(v)) +
+            UNITS[(value >> COMPLEX_UNIT_SHIFT) & COMPLEX_UNIT_MASK];
+    }
+
 }
