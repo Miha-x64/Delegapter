@@ -20,4 +20,6 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    compileOnly 'androidx.databinding:viewbinding:7.0.0'
 }
