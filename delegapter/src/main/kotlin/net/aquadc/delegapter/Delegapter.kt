@@ -61,14 +61,14 @@ abstract class Delegapter(initialCapacity: Int) {
 }
 
 fun Delegapter(
-    target: ListUpdateCallback, delegateSource: MutableDelegapter? = null, initialCapacity: Int = -1,
+    target: ListUpdateCallback, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
-    MutableDelegapter(target, delegateSource, initialCapacity)
+    MutableDelegapter(target, parent, initialCapacity)
 
 fun Delegapter(
-    target: RecyclerView.Adapter<*>, delegateSource: MutableDelegapter? = null, initialCapacity: Int = -1,
+    target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
-    MutableDelegapter(target, delegateSource, initialCapacity)
+    MutableDelegapter(target, parent, initialCapacity)
 
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 abstract class DiffDelegate<D : Any> : DiffUtil.ItemCallback<D>(), (ViewGroup) -> VH<*, *, D> // Delegate<D>

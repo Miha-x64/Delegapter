@@ -21,6 +21,10 @@ class MutableDelegapter(
 
     private val delegateList: ArrayList<Delegate<*>>
     private val delegateTypes: HashMap<Delegate<*>, Int>
+
+    private var repeat: RepeatList<Delegate<*>>? = null
+    private var differ: Differ? = null
+
     init {
         if (parent == null) {
             delegateList = newArrayList(initialCapacity)
@@ -28,6 +32,8 @@ class MutableDelegapter(
         } else {
             delegateList = parent.delegateList
             delegateTypes = parent.delegateTypes
+            repeat = parent.repeat
+            differ = parent.differ
         }
     }
 
@@ -53,7 +59,6 @@ class MutableDelegapter(
         return tryAddDelegate(delegate)
     }
 
-    private var repeat: RepeatList<Delegate<*>>? = null
     fun <D> addAll(items: Collection<D>, delegate: Delegate<in D>): Boolean =
         addAllAt(this.items.size, items, delegate)
     override fun <D : Any> addAllAt(index: Int, items: Collection<D>, delegate: DiffDelegate<in D>): Boolean =
@@ -122,11 +127,12 @@ class MutableDelegapter(
         commit(detectMoves, DiffDelegapter(initialCapacity).apply(block))
     }
 
-    private var differ: Differ? = null
     @PublishedApi internal fun commit(detectMoves: Boolean, tmp: DiffDelegapter) {
-        val differ = differ ?: Differ(this).also { differ = it }
+        val differ = differ ?: Differ().also { differ = it }
+        differ.old = this
         differ.new = tmp
         DiffUtil.calculateDiff(differ, detectMoves).dispatchUpdatesTo(target)
+        differ.old = null
         differ.new = null
         tmp.commit()
     }
@@ -216,25 +222,24 @@ class MutableDelegapter(
 
 }
 
-@Suppress("UNCHECKED_CAST") private class Differ(
-    private val old: MutableDelegapter,
-) : DiffUtil.Callback() {
-    @JvmField var new: MutableDelegapter.DiffDelegapter? = null
-    override fun getOldListSize(): Int = old.size
+@Suppress("UNCHECKED_CAST") private class Differ : DiffUtil.Callback() {
+    @JvmField var old: Delegapter? = null
+    @JvmField var new: Delegapter? = null
+    override fun getOldListSize(): Int = old!!.size
     override fun getNewListSize(): Int = new!!.size
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         new!!.delegateAt(newItemPosition).let {
-            it == old.delegateAt(oldItemPosition) &&
+            it == old!!.delegateAt(oldItemPosition) &&
                 (it as DiffUtil.ItemCallback<Any>)
-                    .areItemsTheSame(old.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
+                    .areItemsTheSame(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
         }
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         new!!.delegateAt(newItemPosition).let {
-            it == old.delegateAt(oldItemPosition) &&
+            it == old!!.delegateAt(oldItemPosition) &&
                 (it as DiffUtil.ItemCallback<Any>)
-                    .areContentsTheSame(old.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
+                    .areContentsTheSame(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
         }
     override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? =
-        (new!!.delegateAt(newItemPosition).takeIf { it == old.delegateAt(oldItemPosition) } as DiffUtil.ItemCallback<Any>?)
-            ?.getChangePayload(old.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
+        (new!!.delegateAt(newItemPosition).takeIf { it == old!!.delegateAt(oldItemPosition) } as DiffUtil.ItemCallback<Any>?)
+            ?.getChangePayload(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
 }
