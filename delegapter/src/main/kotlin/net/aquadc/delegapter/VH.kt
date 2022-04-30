@@ -44,6 +44,18 @@ inline fun <B : ViewBinding, D> inflateVH(
     return VH(binding.root, binding, bind)
 }
 
+fun <D> inflateVH(
+    parent: ViewGroup, layout: Int
+): VH<View, Nothing?, D> {
+    return VH(LayoutInflater.from(parent.context).inflate(layout, parent, false), null)
+}
+
+inline fun <D> inflateVH(
+    parent: ViewGroup, layout: Int, crossinline bind: View.(D) -> Unit
+): VH<View, Nothing?, D> {
+    return VH(LayoutInflater.from(parent.context).inflate(layout, parent, false), null) { d, _, _ -> view.bind(d) }
+}
+
 inline fun <V : View, D> VH(view: V, crossinline bind: V.(D) -> Unit): VH<V, Nothing?, D> =
     VH(view) { d, _, _ ->
         view.bind(d)
