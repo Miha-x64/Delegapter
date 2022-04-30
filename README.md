@@ -120,3 +120,5 @@ data.decor(RecyclerView.VERTICAL) {
 Predicates like `{ it === headerDelegate }` look clumsy but are very flexible because you can check for several conditions there, for example, match any type (`{ true }`) or check for external conditions (`{ useTextSpaces && it === textDelegate }`).
 
 Any tool can make you happy until it works fine. And make you hate your job when something gets screwed up. A virtue of any abstraction level is an ability to peek into and see what actually happens. If you feel sad, just pass some booleans around: `decor(orientation, debugDelegates = true, debugSpaces = true)`. This will show you which delegate is used for each item (that's where `::function.toString()` helps!), or highlight spaces, accordingly.
+
+![Screenshot](screenshot.png)
