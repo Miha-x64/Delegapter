@@ -7,6 +7,9 @@ import net.aquadc.delegapter.VH
 
 abstract class VHAdapter<VHT : VH<*, *, *>> : RecyclerView.Adapter<VHT>() {
 
+    // re-abstracted, don't forget to override it plz
+    abstract override fun getItemViewType(position: Int): Int
+
     // useless overload, never called by RecyclerView
     final override fun onBindViewHolder(holder: VHT, position: Int): Unit =
         onBindViewHolder(holder, position, emptyList())
