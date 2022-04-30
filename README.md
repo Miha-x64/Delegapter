@@ -1,6 +1,20 @@
 
 Yet another adapter delegate library.
 
+```groovy
+repositories {
+    ...
+    maven { url 'https://jitpack.io' }
+}
+
+...
+
+dependencies {
+    implementation("com.github.Miha-x64:Delegapter:-SNAPSHOT")
+}
+
+```
+
 ### ViewHolder
 
 We use our own ViewHolder class (called just `VH`) for a bunch of reasons:
