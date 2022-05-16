@@ -29,8 +29,13 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(RecyclerView(this).apply {
             val adapter = object : VHAdapter<VH<*, *, *>>() {
+
+                // container for all data items and delegates
                 val d = Delegapter(this).apply {
+                    // title / header
                     add("Delegapter", titleDelegate)
+
+                    // items / tiles
                     val dp = resources.displayMetrics.density
                     repeat(Random.nextInt(24, 48)) {
                         add(GradientDrawable().apply {
@@ -39,10 +44,14 @@ class MainActivity : Activity() {
                             setSize((64 * dp).toInt(), (64 * dp).toInt())
                         }, iconDelegate)
                     }
-                    add(SpannableStringBuilder("item with spanSize=4 for symmetry 🤔").apply {
-                        setSpan(TypefaceSpan("monospace"), "item with ".length, "item with spanSize=4".length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    }, titleDelegate)
+
+                    // footer
+                    add(SpannableStringBuilder("item with spanSize=4 for symmetry 🤔").apply { setSpan(
+                        TypefaceSpan("monospace"), "item with ".length, "item with spanSize=4".length,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    ) }, titleDelegate)
                 }
+
                 override fun getItemCount(): Int =
                     d.size
                 override fun getItemViewType(position: Int): Int =
@@ -58,8 +67,8 @@ class MainActivity : Activity() {
                     if (position == 0 || position == adapter.itemCount - 1) it.spanCount else 1
             } }
             addItemDecoration(adapter.d.decor(orientation, debugSpaces = true) {
-                around({ it == titleDelegate }, spaceSize = 24f)
-                between({ true }, spaceSize = 8f)
+                around({ it == titleDelegate }, spaceSize = 24f) // 24dp before and after each title
+                between({ true }, spaceSize = 8f) // 8dp between any two items
             })
         })
     }
