@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 
 
-abstract class Delegapter(initialCapacity: Int) {
+abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     @JvmField protected var items: ArrayList<Any?> = newArrayList(initialCapacity)
     @JvmField protected var itemDelegates: ArrayList<Delegate<*>> = newArrayList(initialCapacity)
