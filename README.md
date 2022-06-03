@@ -10,10 +10,19 @@ repositories {
 ...
 
 dependencies {
-    implementation("com.github.Miha-x64:Delegapter:-SNAPSHOT")
+    implementation("com.github.Miha-x64:Delegapter:6c6574a8")
 }
 
 ```
+
+### Why?
+
+The idea of registering a delegate for a certain item type is flawed:
+* one could forget to register a delegate (runtime crash),
+* or to unregister a useless one (dead code);
+* having items of the same type with different `viewTypes` and `ViewHolder`s is impossible.
+
+The concept of this library is to make everything clear and explicit. No binding a delegate to certain item type, no fallback delegates.
 
 ### ViewHolder
 
@@ -60,7 +69,7 @@ In this example, `userDelegate` property guarantees object identity (`::userHold
 
 Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
 
-Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience:
+Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience, it already delegates `onBindViewHolder` to `VH` for you:
 
 ```kotlin
 class SomeAdapter : VHAdapter<VH<*, *, *>>() {
@@ -113,6 +122,42 @@ class SomeAdapter : RecyclerView.Adapter<…>() {
 ```
 
 Apart from skeletal `VHAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of use.
+
+### DiffUtil
+
+In order to use `DiffUtil`, you need to call replace() function on a `Delegapter` instance:
+
+```kotlin
+d.replace {
+    d.add(...)
+}
+```
+
+A temporary instance of `Delegapter` subclass will be passed to the lambda. Its mutation API is quite similar but requires all your delegates to be `DiffDelegate`. Apart from implementing this interface directly (which is boring), there are two more ways:
+```kotlin
+val someDelegate = ::someDelegate.diff(
+  areItemsTheSame = equateBy(SomeItem::id), /*
+  areContentsTheSame = Any::equals,
+  getChangePayload = { _, _ -> null },
+*/)
+
+
+val otherDelegate = ::otherDelegate + object : DiffUtil.ItemCallback() {
+    override fun are...TheSame(...) = ...
+}
+```
+
+### SpanSizeLookup
+
+This utility is super simple:
+
+```kotlin
+layoutManager = GridLayoutManager(context, spanCount, orientation, false).apply {
+    spanSizeLookup = delegapter.spanSizeLookup { position, item, delegate ->
+        if (delegate == wideDelegate) spanCount else 1
+    }
+}
+```
 
 ### ItemDecoration
 
