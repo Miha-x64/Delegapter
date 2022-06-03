@@ -71,4 +71,3 @@ fun Delegapter(
     MutableDelegapter(target, parent, initialCapacity)
 
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
-abstract class DiffDelegate<D : Any> : DiffUtil.ItemCallback<D>(), (ViewGroup) -> VH<*, *, D> // Delegate<D>
