@@ -69,7 +69,7 @@ In this example, `userDelegate` property guarantees object identity (`::userHold
 
 Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
 
-Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience, it already delegates `onBindViewHolder` to `VH` for you:
+Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience:
 
 ```kotlin
 class SomeAdapter : VHAdapter<VH<*, *, *>>() {
