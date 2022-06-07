@@ -10,7 +10,7 @@ repositories {
 ...
 
 dependencies {
-    implementation("com.github.Miha-x64:Delegapter:6c6574a8")
+    implementation("com.github.Miha-x64:Delegapter:742956d0")
 }
 
 ```
@@ -69,32 +69,18 @@ In this example, `userDelegate` property guarantees object identity (`::userHold
 
 Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
 
-Delegapter is not an `Adapter` itself, just a special data structure. Let's use base `VHAdapter` for convenience:
+Delegapter is not an `Adapter` itself, just a special data structure. Let's use `DelegatedAdapter` for convenience, it already has a `data: Delegapter` property inside:
 
 ```kotlin
-class SomeAdapter : VHAdapter<VH<*, *, *>>() {
+class SomeAdapter : DelegatedAdapter() {
 
     init { stateRestorationPolicy = … }
 
-    private val d = Delegapter(this /* pass self to get notified */)
-
-    override fun getItemCount(): Int =
-        d.size
-
-    override fun getItemViewType(position: Int): Int =
-        d.viewTypeAt(position)
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-        d.createViewHolder(parent, viewType)
-
-    override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>): Unit =
-        d.bindViewHolder(holder, position, payloads)
-
-    fun update(data: Data) {
-        d.clear()
-        d.add(data.header, headerDelegate)
-        d.addAll(data.recommended, recommendationDelegate)
-        d.addAll(data.posts, postDelegate)
+    fun update(item: Data) {
+        data.clear()
+        data.add(item.header, headerDelegate)
+        data.addAll(item.recommended, recommendationDelegate)
+        data.addAll(item.posts, postDelegate)
         // use autocomplete to see all available functions
     }
 
@@ -115,13 +101,14 @@ val delegapterFather = Delegapter(NullListUpdateCallback)
 
 …
 
-class SomeAdapter : RecyclerView.Adapter<…>() {
+class SomeAdapter : RecyclerView.Adapter<…>() { // for custom adapter
     private val d = Delegapter(this, delegapterFather)
     …
 }
+val otherAdapter = DelegatedAdapter(delegapterFather) // using pre-baked adapter
 ```
 
-Apart from skeletal `VHAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of use.
+Apart from skeletal `VHAdapter` and ready-to-use `DelegatedAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of reuse.
 
 ### DiffUtil
 
