@@ -1,7 +1,6 @@
 package net.aquadc.delegapter
 
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 
@@ -48,6 +47,20 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
     fun containsAny(delegate: Delegate<*>): Boolean =
         itemDelegates.contains(delegate)
 
+    @JvmName("indexOfDelegateAndItem") fun <D> indexOf(
+        delegate: Delegate<D>, item: D,
+        startIndex: Int = 0, direction: Int = 1,
+    ): Int {
+        require(direction != 0)
+        var i = startIndex
+        while (i in 0 until size) {
+            if (delegate == itemDelegates[i] && item == items[i])
+                return i
+            i += direction
+        }
+        return -1
+    }
+
     // debug
 
     override fun toString(): String = buildString {
@@ -71,3 +84,34 @@ fun Delegapter(
     MutableDelegapter(target, parent, initialCapacity)
 
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
+
+inline fun Delegapter.indexOf(
+    delegate: (Delegate<*>) -> Boolean, item: (Any?) -> Boolean,
+    startIndex: Int = 0, direction: Int = 1,
+): Int {
+    require(direction != 0)
+    var i = startIndex
+    while (i in 0 until size) {
+        if (delegate(delegateAt(i)) && item(itemAt(i)))
+            return i
+        i += direction
+    }
+    return -1
+}
+
+@JvmName("indexOfByDelegate") inline fun <D> Delegapter.indexOf(
+    noinline delegate: Delegate<D>, item: (D) -> Boolean,
+    startIndex: Int = 0, direction: Int = 1,
+): Int {
+    require(direction != 0)
+    var i = startIndex
+    while (i in 0 until size) {
+        if (delegate == delegateAt(i) && item(itemAt(i) as D))
+            return i
+        i += direction
+    }
+    return -1
+}
+
+inline val Delegapter.lastIndex: Int
+    get() = size - 1
