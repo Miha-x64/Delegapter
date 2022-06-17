@@ -1,7 +1,21 @@
+@file:JvmName("Functions")
 package net.aquadc.delegapter
 
 import android.graphics.Canvas
 import android.graphics.Paint
+
+/**
+ * Makes [function] named by overriding its [Any.toString].
+ */
+@Suppress("UNCHECKED_CAST") @JvmName("named")
+inline operator fun <T, R> String.invoke(crossinline function: (T) -> R): (T) -> R =
+    object : Named(this), (Any?) -> Any? {
+        override fun invoke(p1: Any?): Any? = function(p1 as T)
+    } as (T) -> R
+
+@PublishedApi internal abstract class Named(private val name: String) {
+    final override fun toString(): String = name
+}
 
 internal fun StringBuilder.appendFun(function: Function<*>): StringBuilder =
     function.toString().let { toS -> append(toS, toS.eatFunctionPrefix, toS.eatFunctionPostfix) }

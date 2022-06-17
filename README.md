@@ -59,17 +59,20 @@ typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 
 A typical Delegate declaration looks like this:
 ```kotlin
-val userDelegate = ::userHolder
-private fun userHolder(parent: ViewGroup): Delegate<User> =
+val userDelegate = "user" { parent: ViewGroup ->
     inflateVH(…) { … }
+}
 ```
-In this example, `userDelegate` property guarantees object identity (`::userHolder` expression could give out different instances between invocations). You can just write `val userDelegate = { parent -> … }`, of course, but method reference, unlike lambda, gives meaningful `toString()` and helps debugging.
+
+The string before lambda makes it go through library's `String.invoke(lambda)` function to make it named for debugging purposes. (Unfortunately, `tagged@ { lambda }` has no effect on `toString()`.)
+
+Of course, plain lambdas are accepted, too. And `::function` references are also OK and named on their own.
 
 ### Delegapter
 
 Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
 
-Delegapter is not an `Adapter` itself, just a special data structure. Let's use `DelegatedAdapter` for convenience, it already has a `data: Delegapter` property inside:
+Delegapter is not an `Adapter` itself, just a special data structure. Let's use `DelegatedAdapter` for convenience, it already has `val data = Delegapter(this, …)` property inside:
 
 ```kotlin
 class SomeAdapter : DelegatedAdapter() {
@@ -87,14 +90,14 @@ class SomeAdapter : DelegatedAdapter() {
 }
 ```
 
-This gives you some flexibility for advanced usage scenarios:
-* Insert items not handled by Delegapter (headers, footers, ads 🤮).
-  (Instead of passing `this` to the constructor, use custom `ListUpdateCallback` implementation to correct `notify*()` calls.)
-* Filter out some items without removing them.
-  (This requires a corrected `ListUpdateCallback`, too.)
-* Use several Delegapters in a single Adapter (IDK why but this should happen at some point).
+You may want to use `Delegapter` with a custom adapter in some advanced usage scenarios:
+* Insert items not handled by `Delegapter` (headers, footers, ads 🤮).
+  (Instead of passing `this` to the constructor, use custom `ListUpdateCallback` implementation to correct `notify*()` calls)
+* Filter out some items without removing them
+  (this requires a corrected `ListUpdateCallback`, too)
+* Use several Delegapters in a single Adapter (IDK why but this should happen at some point)
 
-In order to share `RecycledViewPool` between several `RecyclerView`s, you need to preserve the same `viewType` to `Delegate` mapping across adapters. This can be achieved using “parent” `Delegapter`:
+In order to share `RecycledViewPool` between several `RecyclerView`s, you need to preserve the same `viewType` to `Delegate` mapping across adapters. This can be achieved using a shared “parent” `Delegapter`:
 
 ```kotlin
 val delegapterFather = Delegapter(NullListUpdateCallback)
@@ -112,24 +115,24 @@ Apart from skeletal `VHAdapter` and ready-to-use `DelegatedAdapter`, there are t
 
 ### DiffUtil
 
-In order to use `DiffUtil`, you need to call replace() function on a `Delegapter` instance:
+In order to use `DiffUtil`, you need to call `replace { }` function on a `Delegapter` instance:
 
 ```kotlin
-d.replace {
-    d.add(...)
+data.replace {
+    add(...)
 }
 ```
 
-A temporary instance of `Delegapter` subclass will be passed to the lambda. Its mutation API is quite similar but requires all your delegates to be `DiffDelegate`. Apart from implementing this interface directly (which is boring), there are two more ways:
+A temporary instance of `Delegapter` subclass will be passed to the lambda. Its mutation API is quite similar but requires all your delegates to be `DiffDelegate`. Apart from implementing this interface directly (which is boring) there are two more ways:
 ```kotlin
-val someDelegate = ::someDelegate.diff(
+val someDelegate = "some delegate" { … }.diff(
   areItemsTheSame = equateBy(SomeItem::id), /*
   areContentsTheSame = Any::equals,
   getChangePayload = { _, _ -> null },
 */)
 
 
-val otherDelegate = ::otherDelegate + object : DiffUtil.ItemCallback() {
+val otherDelegate = "otherDelegate" { … } + object : DiffUtil.ItemCallback() {
     override fun are...TheSame(...) = ...
 }
 ```
@@ -165,6 +168,10 @@ data.decor(RecyclerView.VERTICAL) {
 
 Predicates like `{ it === headerDelegate }` look clumsy but are very flexible because you can check for several conditions there, for example, match any type (`{ true }`) or check for external conditions (`{ useTextSpaces && it === textDelegate }`).
 
-Any tool can make you happy until it works fine. And make you hate your job when something gets screwed up. A virtue of any abstraction level is an ability to peek into and see what actually happens. If you feel sad, just pass some booleans around: `decor(orientation, debugDelegates = true, debugSpaces = true)`. This will show you which delegate is used for each item (that's where `::function.toString()` helps!), or highlight spaces, accordingly.
+Note that `.decor()` doesn't know which `LayoutManager` you use. With Grid one, it's your responsibility to mind about rows and columns.
+
+### Debugging
+
+Any tool can make you happy until it works fine. And make you hate your job when something gets screwed up. A virtue of any abstraction level is an ability to peek into and see what actually happens. If you feel sad, just pass some booleans around: `decor(orientation, debugDelegates = true, debugSpaces = true)`. This will show you which delegate is used for each item (that's where having named lambdas helps!), or highlight spaces (as on the screenshot).
 
 ![Screenshot](screenshot.png)

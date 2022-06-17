@@ -1,6 +1,7 @@
 package net.aquadc.delegapter.adapter
 
 import android.view.ViewGroup
+import net.aquadc.delegapter.Delegapter
 import net.aquadc.delegapter.MutableDelegapter
 import net.aquadc.delegapter.VH
 
@@ -12,7 +13,7 @@ open class DelegatedAdapter @JvmOverloads constructor(
     initialCapacity: Int = -1,
 ) : VHAdapter<VH<*, *, *>>() {
 
-    val data = MutableDelegapter(this, parent, initialCapacity)
+    @JvmField val data = Delegapter(this, parent, initialCapacity)
 
     final override fun getItemCount(): Int =
         data.size

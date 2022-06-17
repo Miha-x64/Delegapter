@@ -23,6 +23,7 @@ import net.aquadc.delegapter.decor
 import net.aquadc.delegapter.diff
 import net.aquadc.delegapter.equate
 import net.aquadc.delegapter.equateBy
+import net.aquadc.delegapter.invoke
 import net.aquadc.delegapter.spanSizeLookup
 import kotlin.math.max
 import kotlin.math.pow
@@ -109,22 +110,21 @@ private val COLORS = intArrayOf(
     Color.YELLOW,
 )
 
-val titleDelegate = ::titleItem.diff(equate())
-fun titleItem(parent: ViewGroup): VH<*, *, CharSequence> =
-    VH(TextView(parent.context).apply {
+val titleDelegate = "title" { parent: ViewGroup ->
+    VH<TextView, CharSequence>(TextView(parent.context).apply {
         layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
         textSize = 18f
         setTextColor(Color.BLACK)
         gravity = Gravity.CENTER_HORIZONTAL
     }, TextView::setText)
+}.diff(equate())
 
-val iconDelegate = ::iconItem.diff(equateBy(Pair<Float, *>::first))
-fun iconItem(parent: ViewGroup): VH<*, *, Pair<Float, Int>> {
+val iconDelegate = "icon" { parent: ViewGroup ->
     val d = GradientDrawable().apply {
         val dp = parent.resources.displayMetrics.density
         setSize((64 * dp).toInt(), (64 * dp).toInt())
     }
-    return VH(ImageView(parent.context).apply {
+    VH<ImageView, GradientDrawable, Pair<Float, Int>>(ImageView(parent.context).apply {
         layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
         setImageDrawable(d)
     }, d) { (radius: Float, color: Int), _, _ ->
@@ -132,4 +132,4 @@ fun iconItem(parent: ViewGroup): VH<*, *, Pair<Float, Int>> {
         binding.cornerRadius = radius * dp
         binding.setColor(color)
     }
-}
+}.diff(equateBy(Pair<Float, *>::first))

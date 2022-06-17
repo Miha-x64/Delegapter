@@ -1,3 +1,4 @@
+@file:JvmName("Delegapters")
 package net.aquadc.delegapter
 
 import android.view.ViewGroup
@@ -73,12 +74,14 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
 
 }
 
-fun Delegapter(
+@Suppress("NOTHING_TO_INLINE") @JvmName("create") @JvmOverloads
+inline fun Delegapter(
     target: ListUpdateCallback, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
     MutableDelegapter(target, parent, initialCapacity)
 
-fun Delegapter(
+@Suppress("NOTHING_TO_INLINE") @JvmName("create") @JvmOverloads
+inline fun Delegapter(
     target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
     MutableDelegapter(target, parent, initialCapacity)
