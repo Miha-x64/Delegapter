@@ -82,10 +82,4 @@ enum class ViewBounds {
         right += rightBy
         bottom += bottomBy
     }
-
-    companion object {
-        private val VALS = values()
-        /** Returns value at [index]. */
-        operator fun get(index: Int) = VALS[index]
-    }
 }

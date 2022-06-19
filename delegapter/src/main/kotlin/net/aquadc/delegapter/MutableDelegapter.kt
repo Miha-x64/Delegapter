@@ -19,7 +19,7 @@ class MutableDelegapter(
     constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1) :
         this(AdapterListUpdateCallback(target), parent, initialCapacity)
 
-    private val delegateList: ArrayList<Delegate<*>>
+    private val delegateList: RrAL<Delegate<*>>
     private val delegateTypes: HashMap<Delegate<*>, Int>
 
     private var repeat: RepeatList<Delegate<*>>? = null
@@ -27,7 +27,7 @@ class MutableDelegapter(
 
     init {
         if (parent == null) {
-            delegateList = newArrayList(initialCapacity)
+            delegateList = RrAL.create(initialCapacity)
             delegateTypes = if (initialCapacity < 0) HashMap() else HashMap(initialCapacity)
         } else {
             delegateList = parent.delegateList
@@ -86,8 +86,8 @@ class MutableDelegapter(
         target.onRemoved(position, 1)
     }
     fun removeRange(start: Int, endEx: Int) {
-        items.subList(start, endEx).clear()
-        itemDelegates.subList(start, endEx).clear()
+        items.removeRange(start, endEx)
+        itemDelegates.removeRange(start, endEx)
         target.onRemoved(start, endEx - start)
     }
     fun removeAll(elements: Collection<Any?>): Boolean = batchRemove(elements, false)
@@ -161,43 +161,6 @@ class MutableDelegapter(
             if (delegateTypes.containsKey(delegate)) false
             else { delegateTypes[delegate] = delegateTypes.size; delegateList.add(delegate) }
 
-        /*fun remove(element: Any?): Boolean {
-            val iof = items.indexOf(element)
-            return if (iof < 0) false else { removeAt(iof); true }
-        }
-        fun removeAt(position: Int) {
-            items.removeAt(position)
-            itemDelegates.removeAt(position)
-        }
-        fun removeRange(start: Int, endEx: Int) {
-            items.subList(start, endEx).clear()
-            itemDelegates.subList(start, endEx).clear()
-        }
-        fun removeAll(elements: Collection<Any?>): Boolean = batchRemove(elements, false)
-        fun retainAll(elements: Collection<Any?>): Boolean = batchRemove(elements, true)
-        private fun batchRemove(elements: Collection<Any?>, complement: Boolean): Boolean =
-            batchRemoveIf { elements.contains(items[it]) != complement }
-        @JvmName("removeAllBy") fun removeAll(delegate: DiffDelegate<*>): Boolean = batchRemoveBy(delegate, false)
-        @JvmName("retainAllBy") fun retainAll(delegate: DiffDelegate<*>): Boolean = batchRemoveBy(delegate, true)
-        private fun batchRemoveBy(delegate: DiffDelegate<*>, complement: Boolean): Boolean =
-            batchRemoveIf { (itemDelegates[it] == delegate) != complement }
-        @JvmName("removeAllBy") fun removeAll(delegates: Collection<DiffDelegate<*>>): Boolean = batchRemoveBy(delegates, false)
-        @JvmName("retainAllBy") fun retainAll(delegates: Collection<DiffDelegate<*>>): Boolean = batchRemoveBy(delegates, true)
-        private fun batchRemoveBy(delegates: Collection<DiffDelegate<*>>, complement: Boolean): Boolean =
-            batchRemoveIf { delegates.contains(itemDelegates[it]) != complement }
-        private inline fun batchRemoveIf(predicate: (Int) -> Boolean): Boolean {
-            var removed = 0
-            for (i in itemDelegates.indices) if (predicate(i)) {
-                items.markForRemoval(i)
-                itemDelegates.markForRemoval(i)
-                removed++
-            }
-            return if (removed > 0) {
-                items.commitRemovals()
-                itemDelegates.commitRemovals()
-                true
-            } else false
-        }*/
         internal fun commit() {
             this@MutableDelegapter.items = items
             this@MutableDelegapter.itemDelegates = itemDelegates

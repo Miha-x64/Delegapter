@@ -39,7 +39,7 @@ import kotlin.math.min
     forAdapter: RecyclerView.Adapter<*>? = null,
     debugDelegates: Boolean = false,
     debugSpaces: Boolean = false,
-    configure: Decor.() -> Unit = { }
+    configure: Decor.() -> Unit
 ): RecyclerView.ItemDecoration = (
     if (debugDelegates || debugSpaces) DebugDecor(this, orientation, forAdapter, debugDelegates, debugSpaces)
     else Decor(this, orientation, forAdapter)
@@ -54,7 +54,7 @@ import kotlin.math.min
     @RecyclerView.Orientation orientation: Int,
     debugDelegates: Boolean = false,
     debugSpaces: Boolean = false,
-    configure: Decor.() -> Unit = { }
+    configure: Decor.() -> Unit
 ): RecyclerView.ItemDecoration =
     data.decor(orientation, this, debugDelegates, debugSpaces, configure)
 
@@ -232,26 +232,6 @@ open class Decor @PublishedApi internal constructor(
         objs += drawable
     }
 
-    @Suppress("UNCHECKED_CAST")
-    protected inline fun decorAt(
-        index: Int, block: (
-            prev: DelegatePredicate?, next: DelegatePredicate?, size: Int,
-            drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
-        ) -> Unit
-    ) {
-        var i = 3 * index
-        val size = ints[i]
-        val prev = objs[i++] as DelegatePredicate?
-        val bounds = ints[i]
-        val next = objs[i++] as DelegatePredicate?
-        val drawableGravity = ints[i]
-        val drawable = objs[i++] as Drawable?
-        block(
-            prev, next, size,
-            drawable, ViewBounds[bounds ushr 16], BoundsNegotiation[bounds and 0xFFFF], drawableGravity,
-        )
-    }
-
     @JvmField
     protected val decorations = SparseLongArray()
     final override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -268,7 +248,7 @@ open class Decor @PublishedApi internal constructor(
             val nextDelegate = delegateAtOrNull(pos + 1) // will just be null if next item is from another adapter
 
             repeat(objs.size / 3) { index ->
-                decorAt(index) { pp, np, _, _, _, _, _ ->
+                decorAt(ints, objs, index) { pp, np, _, _, _, _, _ ->
                     if (pp == null) {
                         if (np!!(myDelegate)) myDecorations = myDecorations or (1L shl index)
                     } else if (pp(myDelegate) && (np == null || nextDelegate != null && np(nextDelegate))) {
@@ -289,7 +269,7 @@ open class Decor @PublishedApi internal constructor(
         var before = 0
         var after = 0
         myDecorations.forEachBit { _, index ->
-            decorAt(index) { pp, _, dimension, drawable, _, _, _ ->
+            decorAt(ints, objs, index) { pp, _, dimension, drawable, _, _, _ ->
                 if (pp == null) {
                     before += size(mergedPos, dimension, dm, drawable, view)
                 } else {
@@ -297,7 +277,9 @@ open class Decor @PublishedApi internal constructor(
                 }
             }
         }
-        outRect.setBeforeAfter(before, after)
+
+        val h = orientation == HORIZONTAL
+        outRect.set(if (h) before else 0, if (!h) before else 0, if (h) after else 0, if (!h) after else 0)
     }
 
     private fun delegateAtOrNull(position: Int): Delegate<*>? =
@@ -316,16 +298,9 @@ open class Decor @PublishedApi internal constructor(
             tmpInts1[orientation]
         } else complexToDimensionPixelOffset(dimension, displayMetrics)
 
-    private fun Rect.setBeforeAfter(before: Int, after: Int) {
-        val h = orientation == HORIZONTAL
-        set(if (h) before else 0, if (!h) before else 0, if (h) after else 0, if (!h) after else 0)
-    }
-
-    @JvmField
-    protected val rect1 = Rect()
+    @JvmField protected val rect1 = Rect()
     private val rect2 = Rect()
-    @JvmField
-    protected val rectF = RectF()
+    @JvmField protected val rectF = RectF()
     final override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
         val dm = parent.resources.displayMetrics
         for (index in 0 until parent.childCount) {
@@ -345,7 +320,7 @@ open class Decor @PublishedApi internal constructor(
         var before = 0
         var after = 0
         myDecorations.forEachBit { _, index ->
-            decorAt(index) { pp, np, dimension, drawable, bounds, negotiation, gravity ->
+            decorAt(ints, objs, index) { pp, np, dimension, drawable, bounds, negotiation, gravity ->
                 drawable?.apply {
                     level = mergedPos
                     state = view.drawableState
@@ -428,6 +403,28 @@ open class Decor @PublishedApi internal constructor(
         }
     }
 }
+@Suppress("UNCHECKED_CAST")
+private inline fun decorAt(
+    ints: IntArray, objs: ArrayList<*>,
+    index: Int, block: (
+        prev: DelegatePredicate?, next: DelegatePredicate?, size: Int,
+        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
+    ) -> Unit
+) {
+    var i = 3 * index
+    val size = ints[i]
+    val prev = objs[i++] as DelegatePredicate?
+    val bounds = ints[i]
+    val next = objs[i++] as DelegatePredicate?
+    val drawableGravity = ints[i]
+    val drawable = objs[i++] as Drawable?
+    block(
+        prev, next, size,
+        drawable, VIEW_BOUNDS_VALUES[bounds ushr 16], BOUNDS_NEGOTIATION_VALUES[bounds and 0xFFFF], drawableGravity,
+    )
+}
+private val VIEW_BOUNDS_VALUES = ViewBounds.values()
+private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
 
 @PublishedApi @RequiresApi(18) internal class DebugDecor(
     delegapter: MutableDelegapter,
@@ -464,12 +461,12 @@ open class Decor @PublishedApi internal constructor(
             var before = 0
             var after = 0
             myDecorations.forEachBit { _, index ->
-                decorAt(index) { pp, np, dimension, drawable, _, _, _ ->
+                decorAt(ints, objs, index) { pp, np, dimension, drawable, _, _, _ ->
                     if (pp == null) {
-                        paint.setColorWithAlpha(FOREGROUND_BEFORE, view)
+                        setColorWithAlpha(FOREGROUND_BEFORE, view)
                         before += c.drawSpace(mergedPos, parent, dimension, before, rect1, -1, dm, drawable, view)
                     } else {
-                        paint.setColorWithAlpha(if (np == null) FOREGROUND_AFTER else FOREGROUND_BETWEEN, view)
+                        setColorWithAlpha(if (np == null) FOREGROUND_AFTER else FOREGROUND_BETWEEN, view)
                         after += c.drawSpace(mergedPos, parent, dimension, after, rect1, 1, dm, drawable, view)
                     }
                 }
@@ -481,14 +478,14 @@ open class Decor @PublishedApi internal constructor(
         dm.guessTextSize(min(view.width, view.height), 12f, 22f)
         var padding = paint.textSize / 4f
         val toS = myDelegate.toString()
-        paint.setColorWithAlpha(BACKGROUND, view)
+        setColorWithAlpha(BACKGROUND, view)
         drawRect(
             left.toFloat(), top.toFloat(),
             left + paint.measureFun(toS) + padding,
             top - fm.ascent + fm.descent + padding,
             paint
         )
-        paint.setColorWithAlpha(FOREGROUND_BETWEEN, view)
+        setColorWithAlpha(FOREGROUND_BETWEEN, view)
         padding /= 2f
         drawFun(
             toS,
@@ -496,6 +493,10 @@ open class Decor @PublishedApi internal constructor(
             top - fm.ascent + padding,
             paint.also { it.textAlign = Paint.Align.LEFT },
         )
+    }
+    private fun setColorWithAlpha(color: Int, from: View) {
+        paint.color = color
+        paint.alpha = (paint.alpha * from.alpha).toInt()
     }
     private fun Canvas.drawSpace(
         pos: Int, parent: RecyclerView, dimension: Int, space: Int, bnds: Rect, direction: Int, dm: DisplayMetrics,
@@ -534,19 +535,12 @@ open class Decor @PublishedApi internal constructor(
         paint.textSize = MathUtils.clamp(forValue / 3f, min * scaledDensity, max * scaledDensity)
         paint.getFontMetricsInt(fm)
     }
-    private companion object {
-        // random bright colors visible both on black and white
-        private const val FOREGROUND_BEFORE = 0xCC22EE66.toInt()
-        private const val FOREGROUND_BETWEEN = 0xCC22AAAA.toInt()
-        private const val FOREGROUND_AFTER = 0xCC2266EE.toInt()
-        private const val BACKGROUND = 0x33000000
-    }
 }
-
-private fun Paint.setColorWithAlpha(color: Int, from: View) {
-    this.color = color
-    this.alpha = (alpha * from.alpha).toInt()
-}
+// random bright colors visible both on black and white
+private const val FOREGROUND_BEFORE = 0xCC22EE66.toInt()
+private const val FOREGROUND_BETWEEN = 0xCC22AAAA.toInt()
+private const val FOREGROUND_AFTER = 0xCC2266EE.toInt()
+private const val BACKGROUND = 0x33000000
 
 private inline fun Long.forEachBit(func: (setBitIdx: Int, bitIdx: Int) -> Unit) {
     var idx = 0

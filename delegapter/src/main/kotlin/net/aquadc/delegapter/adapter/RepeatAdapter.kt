@@ -8,6 +8,10 @@ import net.aquadc.delegapter.Delegate
 import net.aquadc.delegapter.MutableDelegapter
 import net.aquadc.delegapter.VH
 
+/**
+ * Adapter for a single viewType and item repeated several times.
+ * @author Mike Gorünóv
+ */
 class RepeatAdapter<D>(
     private val delegate: Delegate<D>,
     private val item: D,

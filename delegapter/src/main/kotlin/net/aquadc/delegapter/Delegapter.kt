@@ -8,11 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 
 abstract class Delegapter protected constructor(initialCapacity: Int) {
 
-    @JvmField protected var items: ArrayList<Any?> = newArrayList(initialCapacity)
-    @JvmField protected var itemDelegates: ArrayList<Delegate<*>> = newArrayList(initialCapacity)
-
-    protected fun <E> newArrayList(initialCapacity: Int): ArrayList<E> =
-        if (initialCapacity < 0) ArrayList() else ArrayList(initialCapacity)
+    @JvmField protected var itemDelegates: RrAL<Delegate<*>> = RrAL.create(initialCapacity)
+    @JvmField protected var items: RrAL<Any?> = RrAL.create(initialCapacity)
 
     // common mutable interface
 
@@ -48,7 +45,7 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
     fun containsAny(delegate: Delegate<*>): Boolean =
         itemDelegates.contains(delegate)
 
-    @JvmName("indexOfDelegateAndItem") fun <D> indexOf(
+    fun <D> indexOf(
         delegate: Delegate<D>, item: D,
         startIndex: Int = 0, direction: Int = 1,
     ): Int {

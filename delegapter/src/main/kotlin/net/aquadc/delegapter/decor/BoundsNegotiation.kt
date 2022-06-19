@@ -91,10 +91,4 @@ enum class BoundsNegotiation {
      * Swap start with end if applicable to this mode.
      */
     open fun maybeSwap(@Size(2) startEnd1: IntArray) {}
-
-    companion object {
-        private val VALS = values()
-        /** Returns value at [index]. */
-        operator fun get(index: Int) = VALS[index]
-    }
 }

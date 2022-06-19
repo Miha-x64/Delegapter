@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import net.aquadc.delegapter.Delegate
 import net.aquadc.delegapter.MutableDelegapter
+import net.aquadc.delegapter.RrAL
 import net.aquadc.delegapter.VH
 import net.aquadc.delegapter.commitRemovals
 import net.aquadc.delegapter.markForRemoval
@@ -18,7 +19,7 @@ class SingleTypeAdapter<D>(
 
     private val viewType = parent?.viewTypeFor(delegate) ?: 0
 
-    val items: MutableList<D> = ObservableList(ArrayList(items), this)
+    val items: MutableList<D> = ObservableList(RrAL(items), this)
 
     override fun getItemCount(): Int =
         items.size
@@ -35,7 +36,7 @@ class SingleTypeAdapter<D>(
 }
 
 private class ObservableList<D>(
-    private val list: ArrayList<D>,
+    private val list: RrAL<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
 ) : AbstractMutableList<D>() {
 
@@ -93,7 +94,7 @@ private class ObservableList<D>(
     }
 
     override fun removeRange(fromIndex: Int, toIndex: Int) {
-        (if (fromIndex == 0 && toIndex == list.size) list else list.subList(fromIndex, toIndex)).clear()
+        list.removeRange(fromIndex, toIndex)
         callback.notifyItemRangeRemoved(fromIndex, toIndex)
     }
 }
