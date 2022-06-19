@@ -17,6 +17,8 @@ inline operator fun <T, R> String.invoke(crossinline function: (T) -> R): (T) ->
     final override fun toString(): String = name
 }
 
+// used by DebugDecor
+
 internal fun StringBuilder.appendFun(function: Function<*>): StringBuilder =
     function.toString().let { toS -> append(toS, toS.eatFunctionPrefix, toS.eatFunctionPostfix) }
 

@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlin.collections.set
 
 /**
+ * Mutable data structure for holding (delegate, item) pairs with agreed types.
  * @author Mike Gorünóv
  */
 class MutableDelegapter(

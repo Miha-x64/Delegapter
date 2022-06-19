@@ -1,9 +1,9 @@
-@file:Suppress("FunctionName")
-
+@file:JvmName("Adapters")
 package net.aquadc.delegapter.adapter
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import net.aquadc.delegapter.Delegate
 import net.aquadc.delegapter.MutableDelegapter
 import net.aquadc.delegapter.VH
@@ -45,5 +45,11 @@ class RepeatAdapter<D>(
 
 }
 
-fun RepeatAdapter(view: View, size: Int = 1): RepeatAdapter<Unit> =
-    RepeatAdapter({ VH(view) }, Unit, size)
+/**
+ * Adapter for a single [View].
+ * @author Mike Gorünóv
+ */
+@Suppress("FunctionName")
+@JvmName("singleItem")
+fun SingleItemAdapter(view: View): RecyclerView.Adapter<*> =
+    RepeatAdapter({ VH(view) }, Unit, 1)

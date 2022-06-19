@@ -11,6 +11,10 @@ import net.aquadc.delegapter.commitRemovals
 import net.aquadc.delegapter.markForRemoval
 import java.util.function.Predicate
 
+/**
+ * Adapter for a single viewType.
+ * @author Mike Gorünóv
+ */
 class SingleTypeAdapter<D>(
     private val delegate: Delegate<D>,
     items: List<D> = emptyList(),
@@ -19,7 +23,7 @@ class SingleTypeAdapter<D>(
 
     private val viewType = parent?.viewTypeFor(delegate) ?: 0
 
-    val items: MutableList<D> = ObservableList(RrAL(items), this)
+    val items: MutableList<D> = ObservableList(items, this)
 
     override fun getItemCount(): Int =
         items.size
@@ -36,9 +40,11 @@ class SingleTypeAdapter<D>(
 }
 
 private class ObservableList<D>(
-    private val list: RrAL<D>,
+    list: List<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
 ) : AbstractMutableList<D>() {
+
+    private val list = RrAL(list)
 
     override val size: Int
         get() = list.size

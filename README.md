@@ -10,7 +10,7 @@ repositories {
 ...
 
 dependencies {
-    implementation("com.github.Miha-x64:Delegapter:742956d0")
+    implementation("com.github.Miha-x64:Delegapter:0.9")
 }
 
 ```

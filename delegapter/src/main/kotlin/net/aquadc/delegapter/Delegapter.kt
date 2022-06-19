@@ -5,7 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 
-
+/**
+ * Data structure for holding (delegate, item) pairs with agreed types.
+ * @author Mike Gorünóv
+ */
 abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     @JvmField protected var itemDelegates: RrAL<Delegate<*>> = RrAL.create(initialCapacity)

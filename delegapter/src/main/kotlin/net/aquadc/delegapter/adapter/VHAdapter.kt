@@ -4,7 +4,10 @@ import androidx.annotation.CallSuper
 import androidx.recyclerview.widget.RecyclerView
 import net.aquadc.delegapter.VH
 
-
+/**
+ * Base [RecyclerView.Adapter] for using with [VH].
+ * @author Mike Gorünóv
+ */
 abstract class VHAdapter<VHT : VH<*, *, *>> : RecyclerView.Adapter<VHT>() {
 
     // re-abstracted, don't forget to override it plz

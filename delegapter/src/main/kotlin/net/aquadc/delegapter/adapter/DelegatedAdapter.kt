@@ -6,7 +6,8 @@ import net.aquadc.delegapter.MutableDelegapter
 import net.aquadc.delegapter.VH
 
 /**
- * An adapter implementation with Delegapter inside.
+ * An adapter implementation with [Delegapter] inside.
+ * @author Mike Gorünóv
  */
 open class DelegatedAdapter @JvmOverloads constructor(
     parent: MutableDelegapter? = null,

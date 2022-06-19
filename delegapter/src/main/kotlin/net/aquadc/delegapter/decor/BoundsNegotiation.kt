@@ -4,6 +4,7 @@ import androidx.annotation.Size
 
 /**
  * Specifies how to negotiate two different pairs of bounds.
+ * @author Mike Gorünóv
  */
 enum class BoundsNegotiation {
 

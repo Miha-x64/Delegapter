@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 /**
  * Enumerates different (left, top, right, bottom) positions for any [android.view.View].
+ * @author Mike Gorünóv
  */
 enum class ViewBounds {
 

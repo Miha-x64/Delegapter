@@ -8,7 +8,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 
-
+/**
+ * Base ViewHolder with generified [view][V] and [binding/attachment][binding], and typed [bind] function.
+ * @author Mike Gorünóv
+ */
 open class VH<out V : View, out B, in D>(view: V, val binding: B) : RecyclerView.ViewHolder(view) {
     @Suppress("UNCHECKED_CAST")
     inline val view: V get() = itemView as V

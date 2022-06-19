@@ -33,6 +33,7 @@ import kotlin.math.min
  * @param forAdapter if specified, consider only items from this adapter
  * @param debugDelegates draw delegate names (debug feature)
  * @param debugSpaces draw space sizes (debug feature)
+ * @author Mike Gorünóv
  */
 @RequiresApi(18) inline fun MutableDelegapter.decor(
     @RecyclerView.Orientation orientation: Int,
@@ -49,6 +50,7 @@ import kotlin.math.min
  * Build an [RecyclerView.ItemDecoration] for [this] adapter.
  * @param debugDelegates draw delegate names (debug feature)
  * @param debugSpaces draw space sizes (debug feature)
+ * @author Mike Gorünóv
  */
 @RequiresApi(18) inline fun DelegatedAdapter.decor(
     @RecyclerView.Orientation orientation: Int,
