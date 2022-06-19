@@ -16,14 +16,14 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     // common mutable interface
 
-    fun <D : Any> add(item: D, delegate: DiffDelegate<in D>): Boolean =
-        addAt(items.size, item, delegate)
-    abstract fun <D : Any> addAt(index: Int, item: D, delegate: DiffDelegate<in D>): Boolean
-    abstract fun <D : Any> set(index: Int, item: D, delegate: DiffDelegate<in D>/*, payload: Any? = null*/): Boolean
+    fun <D : Any> add(delegate: DiffDelegate<in D>, item: D): Boolean =
+        addAt(items.size, delegate, item)
+    abstract fun <D : Any> addAt(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean
+    abstract fun <D : Any> set(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean
 
-    fun <D : Any> addAll(items: Collection<D>, delegate: DiffDelegate<in D>): Boolean =
-        addAllAt(this.items.size, items, delegate)
-    abstract fun <D : Any> addAllAt(index: Int, items: Collection<D>, delegate: DiffDelegate<in D>): Boolean
+    fun <D : Any> addAll(delegate: DiffDelegate<in D>, items: Collection<D>): Boolean =
+        addAllAt(this.items.size, delegate, items)
+    abstract fun <D : Any> addAllAt(index: Int, delegate: DiffDelegate<in D>, items: Collection<D>): Boolean
 
     // use like a List
 

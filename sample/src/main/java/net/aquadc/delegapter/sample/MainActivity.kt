@@ -42,22 +42,22 @@ class MainActivity : Activity() {
                 init { data.fill() }
                 private fun Delegapter.fill() {
                     // title / header
-                    add("Delegapter", titleDelegate)
+                    add(titleDelegate, "Delegapter")
 
                     // items / tiles
                     repeat(Random.nextInt(24, 48)) {
                         val rad = 2.0.pow(Random.nextInt(6)).toFloat()
                         val col = 0xFFDDDDDD.toInt() and COLORS.random()
-                        add(rad to col, iconDelegate)
+                        add(iconDelegate, rad to col)
                     }
 
                     // footer
-                    add(SpannableStringBuilder("item with spanSize=4 for symmetry 🤔").apply {
+                    add(titleDelegate, SpannableStringBuilder("item with spanSize=4 for symmetry 🤔").apply {
                         setSpan(
                             TypefaceSpan("monospace"), "item with ".length, "item with spanSize=4".length,
                             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                         )
-                    }, titleDelegate)
+                    })
                 }
 
                 fun refresh() {

@@ -39,31 +39,31 @@ class MutableDelegapter(
 
     // configure like a MutableList
 
-    fun <D> add(item: D, delegate: Delegate<in D>): Boolean =
-        addAt(items.size, item, delegate)
-    override fun <D : Any> addAt(index: Int, item: D, delegate: DiffDelegate<in D>): Boolean =
-        addAt(index, item, delegate as Delegate<in D>)
-    fun <D> addAt(index: Int, item: D, delegate: Delegate<in D>): Boolean {
+    fun <D> add(delegate: Delegate<in D>, item: D): Boolean =
+        addAt(items.size, delegate, item)
+    override fun <D : Any> addAt(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean =
+        addAt(index, delegate as Delegate<in D>, item)
+    fun <D> addAt(index: Int, delegate: Delegate<in D>, item: D): Boolean {
         items.add(index, item)
         itemDelegates.add(index, delegate)
         target.onInserted(index, 1)
         return tryAddDelegate(delegate)
     }
 
-    override fun <D : Any> set(index: Int, item: D, delegate: DiffDelegate<in D>): Boolean =
-        set(index, item, delegate as Delegate<in D>)
-    fun <D> set(index: Int, item: D, delegate: Delegate<in D>, payload: Any? = null): Boolean {
+    override fun <D : Any> set(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean =
+        set(index, delegate as Delegate<in D>, item)
+    @JvmOverloads fun <D> set(index: Int, delegate: Delegate<in D>, item: D, payload: Any? = null): Boolean {
         items[index] = item
         itemDelegates[index] = delegate
         target.onChanged(index, 1, payload)
         return tryAddDelegate(delegate)
     }
 
-    fun <D> addAll(items: Collection<D>, delegate: Delegate<in D>): Boolean =
-        addAllAt(this.items.size, items, delegate)
-    override fun <D : Any> addAllAt(index: Int, items: Collection<D>, delegate: DiffDelegate<in D>): Boolean =
-        addAllAt(index, items, delegate as Delegate<in D>)
-    fun <D> addAllAt(index: Int, items: Collection<D>, delegate: Delegate<in D>): Boolean =
+    fun <D> addAll(delegate: Delegate<in D>, items: Collection<D>): Boolean =
+        addAllAt(this.items.size, delegate, items)
+    override fun <D : Any> addAllAt(index: Int, delegate: DiffDelegate<in D>, items: Collection<D>): Boolean =
+        addAllAt(index, delegate as Delegate<in D>, items)
+    fun <D> addAllAt(index: Int, delegate: Delegate<in D>, items: Collection<D>): Boolean =
         if (items.isEmpty()) false else {
             this.items.addAll(index, items)
             (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })
@@ -138,18 +138,18 @@ class MutableDelegapter(
     }
 
     inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
-        override fun <D : Any> addAt(index: Int, item: D, delegate: DiffDelegate<in D>): Boolean {
+        override fun <D : Any> addAt(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean {
             items.add(index, item)
             itemDelegates.add(index, delegate)
             return tryAddDelegate(delegate)
         }
-        override fun <D : Any> set(index: Int, item: D, delegate: DiffDelegate<in D>/*, payload: Any? = null*/): Boolean {
+        override fun <D : Any> set(index: Int, delegate: DiffDelegate<in D>/*, payload: Any? = null*/, item: D): Boolean {
             items[index] = item
             itemDelegates[index] = delegate
             return tryAddDelegate(delegate)
         }
 
-        override fun <D : Any> addAllAt(index: Int, items: Collection<D>, delegate: DiffDelegate<in D>): Boolean =
+        override fun <D : Any> addAllAt(index: Int, delegate: DiffDelegate<in D>, items: Collection<D>): Boolean =
             if (items.isEmpty()) false else {
                 this.items.addAll(index, items)
                 (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })

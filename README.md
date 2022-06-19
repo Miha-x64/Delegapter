@@ -70,7 +70,7 @@ Of course, plain lambdas are accepted, too. And `::function` references are also
 
 ### Delegapter
 
-Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<D, Delegate<D>>` (non-denotable type in Java/Kotlin). 
+Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<Delegate<D>, D>` (non-denotable type in Java/Kotlin). 
 
 Delegapter is not an `Adapter` itself, just a special data structure. Let's use `DelegatedAdapter` for convenience, it already has `val data = Delegapter(this, …)` property inside:
 
@@ -81,9 +81,9 @@ class SomeAdapter : DelegatedAdapter() {
 
     fun update(item: Data) {
         data.clear()
-        data.add(item.header, headerDelegate)
-        data.addAll(item.recommended, recommendationDelegate)
-        data.addAll(item.posts, postDelegate)
+        data.add(headerDelegate, item.header)
+        data.addAll(recommendationDelegate, item.recommended)
+        data.addAll(postDelegate, item.posts)
         // use autocomplete to see all available functions
     }
 
