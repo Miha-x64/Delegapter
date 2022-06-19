@@ -151,24 +151,43 @@ layoutManager = GridLayoutManager(context, spanCount, orientation, false).apply 
 
 ### ItemDecoration
 
-Decorating different viewTypes is a stressful job. Here's how Delegapter helps you to add spaces between items of certain types:
+Decorating different viewTypes is a stressful job. Here's how Delegapter helps you to add spaces and dividers for items of certain types:
 
 ```kotlin
 data.decor(RecyclerView.VERTICAL) {
-  // keep 16dp after title, before user
-  between({ it === headerDelegate }, { it === userDelegate }, spaceSize = 16f)
+  // keep 16dp after header, before user
+  between({ it === headerDelegate }, { it === userDelegate }, size = 16)
 
   // keep 30dp between any two users
-  between({ it === userDelegate }, spaceSize = 30f)
+  between({ it === userDelegate }, size = 30)
   
   // text units for text items!
-  between({ it === textDelegate }, spaceSize = 16f, spaceUnit = COMPLEX_UNIT_SP)
+  between({ it === textDelegate }, size = 16, unit = COMPLEX_UNIT_SP)
+
+  // dividers
+  after({ it === titleDelegate }, size = 1, drawable = ColorDrawable(Color.BLACK))
+
+  // dividers with spaces
+  after(
+    { it === titleDelegate },
+    size = 5,
+    drawable = GradientDrawable().apply {
+      setColor(Color.BLACK)
+      setSize(0, dp(1))
+    },
+    drawableGravity = Gravity.CENTER_VERTICAL or Gravity.FILL_HORIZONTAL,
+  )
 }
 ```
 
 Predicates like `{ it === headerDelegate }` look clumsy but are very flexible because you can check for several conditions there, for example, match any type (`{ true }`) or check for external conditions (`{ useTextSpaces && it === textDelegate }`).
 
-Note that `.decor()` doesn't know which `LayoutManager` you use. With Grid one, it's your responsibility to mind about rows and columns.
+`Drawable` will receive `state` and `alpha` from the `View` it belongs to. `bindingAdapterPosition` (or `-1 - layoutPosition`, if the former is not available) will be passed to `Drawable` as `level`.
+
+Note: strictly speaking, `between()` means “attach decoration _after previous_ matching item if _next_ item matches”. Thus, if you're adding new item, you need to `notifyItemChanged(previousItemIndex, anyDummy)` to make this decoration appear.
+
+One more precaution: `.decor()` doesn't know which `LayoutManager` you use. With Grid one, it's your responsibility to mind about rows and columns.
+
 
 ### Debugging
 

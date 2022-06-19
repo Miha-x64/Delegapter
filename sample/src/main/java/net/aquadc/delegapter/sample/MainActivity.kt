@@ -2,6 +2,7 @@ package net.aquadc.delegapter.sample
 
 import android.app.Activity
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Spannable
@@ -18,8 +19,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.aquadc.delegapter.Delegapter
 import net.aquadc.delegapter.VH
-import net.aquadc.delegapter.adapter.VHAdapter
-import net.aquadc.delegapter.decor
+import net.aquadc.delegapter.adapter.DelegatedAdapter
+import net.aquadc.delegapter.decor.BoundsNegotiation
+import net.aquadc.delegapter.decor.decor
 import net.aquadc.delegapter.diff
 import net.aquadc.delegapter.equate
 import net.aquadc.delegapter.equateBy
@@ -27,6 +29,7 @@ import net.aquadc.delegapter.invoke
 import net.aquadc.delegapter.spanSizeLookup
 import kotlin.math.max
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class MainActivity : Activity() {
@@ -34,9 +37,9 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(SwipeRefreshLayout(this).apply {
 
-            val adapter = object : VHAdapter<VH<*, *, *>>() {
+            val adapter = object : DelegatedAdapter() {
                 // container for all data items and delegates
-                val d = Delegapter(this).apply { fill() }
+                init { data.fill() }
                 private fun Delegapter.fill() {
                     // title / header
                     add("Delegapter", titleDelegate)
@@ -58,33 +61,37 @@ class MainActivity : Activity() {
                 }
 
                 fun refresh() {
-                    d.replace { fill() }
+                    data.replace { fill() }
                 }
-
-                override fun getItemCount(): Int =
-                    d.size
-
-                override fun getItemViewType(position: Int): Int =
-                    d.viewTypeAt(position)
-
-                override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-                    d.createViewHolder(parent, viewType)
-
-                override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>) =
-                    d.bindViewHolder(holder, position, payloads)
             }
 
             val recycler = RecyclerView(context).apply {
                 this.adapter = adapter
                 val orientation = RecyclerView.VERTICAL
                 layoutManager = GridLayoutManager(context, 4, orientation, false).apply {
-                    spanSizeLookup = adapter.d.spanSizeLookup { _, _, delegate ->
+                    spanSizeLookup = adapter.data.spanSizeLookup { _, _, delegate ->
                         if (delegate == titleDelegate) spanCount else 1
                     }
                 }
-                addItemDecoration(adapter.d.decor(orientation, debugSpaces = true) {
-                    around({ it == titleDelegate }, spaceSize = 24f) // 24dp before and after each title
-                    between({ true }, spaceSize = 8f) // 8dp between any two items
+                addItemDecoration(adapter.data.decor(orientation, debugSpaces = true) {
+                    around({ it === titleDelegate }, size = 24) // 24dp before and after each title
+
+                    between( // divider after title
+                        { it === titleDelegate }, { it !== titleDelegate },
+                        size = 1, drawable = ColorDrawable(Color.BLACK),
+                        viewBoundsNegotiation = BoundsNegotiation.Outer,
+                    )
+
+                    between({ true }, size = 8) // 8dp between any two items
+
+                    between( // divider before footer
+                        { it !== titleDelegate }, { it === titleDelegate },
+                        drawable = GradientDrawable().apply {
+                            setColor(Color.BLACK)
+                            setSize(0, max(1, resources.displayMetrics.density.roundToInt()))
+                        },
+                        viewBoundsNegotiation = BoundsNegotiation.Outer,
+                    )
                 })
             }
 
