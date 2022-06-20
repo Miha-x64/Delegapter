@@ -4,6 +4,7 @@ package net.aquadc.delegapter
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
+import net.aquadc.delegapter.decor.DelegatePredicate
 
 /**
  * Data structure for holding (delegate, item) pairs with agreed types.
@@ -16,14 +17,9 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     // common mutable interface
 
-    fun <D : Any> add(delegate: DiffDelegate<in D>, item: D): Boolean =
-        addAt(items.size, delegate, item)
-    abstract fun <D : Any> addAt(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean
-    abstract fun <D : Any> set(index: Int, delegate: DiffDelegate<in D>, item: D): Boolean
-
-    fun <D : Any> addAll(delegate: DiffDelegate<in D>, items: Collection<D>): Boolean =
-        addAllAt(this.items.size, delegate, items)
-    abstract fun <D : Any> addAllAt(index: Int, delegate: DiffDelegate<in D>, items: Collection<D>): Boolean
+    abstract fun <D : Any> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int = size): Boolean
+    abstract fun <D : Any> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean
+    abstract fun <D : Any> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int = size): Boolean
 
     // use like a List
 
@@ -61,6 +57,19 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
         }
         return -1
     }
+    fun <D> indexOf(
+        delegate: Delegate<D>,
+        startIndex: Int = 0, direction: Int = 1,
+    ): Int {
+        require(direction != 0)
+        var i = startIndex
+        while (i in 0 until size) {
+            if (delegate == itemDelegates[i])
+                return i
+            i += direction
+        }
+        return -1
+    }
 
     // debug
 
@@ -88,8 +97,8 @@ inline fun Delegapter(
 
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 
-inline fun Delegapter.indexOf(
-    delegate: (Delegate<*>) -> Boolean, item: (Any?) -> Boolean,
+inline fun Delegapter.findIndexOf(
+    delegate: DelegatePredicate, item: (Any?) -> Boolean,
     startIndex: Int = 0, direction: Int = 1,
 ): Int {
     require(direction != 0)
@@ -102,7 +111,7 @@ inline fun Delegapter.indexOf(
     return -1
 }
 
-@JvmName("indexOfByDelegate") inline fun <D> Delegapter.indexOf(
+inline fun <D> Delegapter.findIndexOfBy(
     noinline delegate: Delegate<D>, item: (D) -> Boolean,
     startIndex: Int = 0, direction: Int = 1,
 ): Int {
