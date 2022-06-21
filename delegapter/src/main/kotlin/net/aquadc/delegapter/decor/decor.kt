@@ -335,7 +335,8 @@ open class Decor @PublishedApi internal constructor(
                     else complexToDimensionPixelOffset(dimension, dm)
 
                 if (drawable != null) {
-                    bounds.of(view, rect1, rectF)
+                    ViewBounds.WithMargins.of(view, rect1, rectF, 1 shl orientation)
+                    bounds.of(view, rect1, rectF, 1 shl notOrientation)
 
                     val dir = view.layoutDirection
                     if (pp == null) {
@@ -380,7 +381,8 @@ open class Decor @PublishedApi internal constructor(
     private fun negotiateBounds(negotiation: BoundsNegotiation, dir: Int, bounds: ViewBounds, nextView: View) {
         val (tmpIntW, tmpIntH) = tmpInts1
         rect1.negotiableBoundsTo(tmpInts1, negotiation, dir)
-        bounds.of(nextView, rect2, rectF)
+        ViewBounds.WithMargins.of(nextView, rect2, rectF, 1 shl orientation)
+        bounds.of(nextView, rect2, rectF, 1 shl notOrientation)
         rect2.negotiableBoundsTo(tmpInts2, negotiation, dir)
         negotiation.negotiate(tmpInts2, tmpInts1)
         if (orientation == HORIZONTAL) {
@@ -404,6 +406,8 @@ open class Decor @PublishedApi internal constructor(
             if (layoutDirection == LAYOUT_DIRECTION_RTL) negotiation.maybeSwap(dst)
         }
     }
+    private inline val notOrientation: Int
+        get() = orientation.inv() and 1 // H->V, V->H: just invert lower bit
 }
 @Suppress("UNCHECKED_CAST")
 private inline fun decorAt(
@@ -449,7 +453,7 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
         if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
         val pos = myHolder.bindingAdapterPosition
 
-        ViewBounds.WithMargins.of(view, rect1, rectF)
+        ViewBounds.WithMargins.of(view, rect1, rectF, (1 shl HORIZONTAL) or (1 shl VERTICAL))
 
         if (delegates && pos >= 0) {
             c.drawDelegate(view, delegapter.delegateAt(pos), rect1.left, rect1.top, dm)

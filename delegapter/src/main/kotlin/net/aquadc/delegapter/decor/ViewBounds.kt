@@ -16,12 +16,13 @@ enum class ViewBounds {
      * Bounds with margins and ItemDecoration offsets.
      */
     DecoratedWithMargins {
-        override fun of(child: View, into: Rect, tmpRectF: RectF) {
-            WithMargins.of(child, into, tmpRectF)
+        override fun of(child: View, into: Rect, tmpRectF: RectF, axes: Int) {
+            WithMargins.of(child, into, tmpRectF, axes)
             (child.parent as? RecyclerView)?.layoutManager?.let { manager ->
                 into.offset(
                     -manager.getLeftDecorationWidth(child), -manager.getTopDecorationHeight(child),
                     manager.getRightDecorationWidth(child), manager.getBottomDecorationHeight(child),
+                    axes,
                 )
             }
         }
@@ -31,10 +32,10 @@ enum class ViewBounds {
      * Bounds with margins.
      */
     WithMargins {
-        override fun of(child: View, into: Rect, tmpRectF: RectF) {
-            child.getHitRect(into)
+        override fun of(child: View, into: Rect, tmpRectF: RectF, axes: Int) {
+            Padded.of(child, into, tmpRectF, axes)
             (child.layoutParams as? MarginLayoutParams)?.let {
-                into.offset(-it.leftMargin, -it.topMargin, it.rightMargin, it.bottomMargin)
+                into.offset(-it.leftMargin, -it.topMargin, it.rightMargin, it.bottomMargin, axes)
             }
         }
     },
@@ -43,8 +44,15 @@ enum class ViewBounds {
      * “Normal” bounds with paddings.
      */
     Padded {
-        override fun of(child: View, into: Rect, tmpRectF: RectF) {
+        override fun of(child: View, into: Rect, tmpRectF: RectF, axes: Int) {
+            val l = into.left; val t = into.top; val r = into.right; val b = into.bottom
             child.getHitRect(into)
+            if (!axes.has(RecyclerView.HORIZONTAL)) {
+                into.left = l; into.right = r
+            }
+            if (!axes.has(RecyclerView.VERTICAL)) {
+                into.top = t; into.bottom = b
+            }
         }
     },
 
@@ -52,7 +60,8 @@ enum class ViewBounds {
      * Bounds inset by paddings.
      */
     Unpadded {
-        override fun of(child: View, into: Rect, tmpRectF: RectF) {
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog") // no NaN check in round() please
+        override fun of(child: View, into: Rect, tmpRectF: RectF, axes: Int) {
             tmpRectF.set(
                 child.paddingLeft.toFloat(),
                 child.paddingTop.toFloat(),
@@ -62,11 +71,14 @@ enum class ViewBounds {
             child.matrix.mapRect(tmpRectF)
             val left = child.left
             val top = child.top
-            @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog") // no NaN check please
-            into.set(
-                left + Math.round(tmpRectF.left), top + Math.round(tmpRectF.top),
-                left + Math.round(tmpRectF.right), top + Math.round(tmpRectF.bottom),
-            )
+            if (axes.has(RecyclerView.HORIZONTAL)) {
+                into.left = left + Math.round(tmpRectF.left)
+                into.right = left + Math.round(tmpRectF.right)
+            }
+            if (axes.has(RecyclerView.VERTICAL)) {
+                into.top = top + Math.round(tmpRectF.top)
+                into.bottom = top + Math.round(tmpRectF.bottom)
+            }
         }
     },
 
@@ -75,12 +87,19 @@ enum class ViewBounds {
     /**
      * Gets bounds of [child] view into [the given Rect][into].
      */
-    abstract fun of(child: View, into: Rect, tmpRectF: RectF)
+    abstract fun of(child: View, into: Rect, tmpRectF: RectF, axes: Int)
 
-    protected fun Rect.offset(leftBy: Int, topBy: Int, rightBy: Int, bottomBy: Int) {
-        left += leftBy
-        top += topBy
-        right += rightBy
-        bottom += bottomBy
+    protected fun Rect.offset(leftBy: Int, topBy: Int, rightBy: Int, bottomBy: Int, orientations: Int) {
+        if (orientations.has(RecyclerView.HORIZONTAL)) {
+            left += leftBy
+            right += rightBy
+        }
+        if (orientations.has(RecyclerView.VERTICAL)) {
+            top += topBy
+            bottom += bottomBy
+        }
     }
+    protected fun Int.has(at: Int) =
+        ((1 shl at) and this) != 0
+
 }
