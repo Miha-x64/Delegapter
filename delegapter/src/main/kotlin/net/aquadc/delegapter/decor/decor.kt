@@ -239,15 +239,16 @@ open class Decor @PublishedApi internal constructor(
     final override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         val myHolder = parent.getChildViewHolder(view) ?: return outRect.setEmpty()
         if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return outRect.setEmpty()
-        val pos = myHolder.bindingAdapterPosition
+        val aPos = myHolder.absoluteAdapterPosition
+        val bPos = myHolder.bindingAdapterPosition
         var myDecorations = 0L
-        val mergedPos = if (pos < 0) {
+        val mergedPos = if (aPos < 0 || bPos < 0) {
             val lp = myHolder.layoutPosition
             myDecorations = decorations.get(lp)
             -1 - lp
         } else {
-            val myDelegate = delegapter.delegateAt(pos)
-            val nextDelegate = delegateAtOrNull(pos + 1) // will just be null if next item is from another adapter
+            val myDelegate = delegapter.delegateAt(bPos)
+            val nextDelegate = delegateAtOrNull(bPos + 1) // will just be null if next item is from another adapter
 
             repeat(objs.size / 3) { index ->
                 decorAt(ints, objs, index) { pp, np, _, _, _, _, _ ->
@@ -259,9 +260,9 @@ open class Decor @PublishedApi internal constructor(
                 }
             }
 
-            if (myDecorations == 0L) decorations.delete(pos)
-            else decorations.put(pos, myDecorations)
-            pos
+            if (myDecorations == 0L) decorations.delete(aPos)
+            else decorations.put(aPos, myDecorations)
+            bPos
         }
 
         if (myDecorations == 0L)
@@ -313,12 +314,13 @@ open class Decor @PublishedApi internal constructor(
     private fun drawFor(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics) {
         val myHolder = parent.getChildViewHolder(view) ?: return
         if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
-        val pos = myHolder.bindingAdapterPosition
+        val aPos = myHolder.absoluteAdapterPosition
+        val bPos = myHolder.bindingAdapterPosition
         val lp = myHolder.layoutPosition
-        val myDecorations = decorations.get(if (pos >= 0) pos else lp)
+        val myDecorations = decorations.get(if (aPos >= 0) aPos else lp)
         if (myDecorations == 0L) return
 
-        val mergedPos = if (pos >= 0) pos else -1 - lp
+        val mergedPos = if (bPos >= 0) bPos else -1 - lp
         var before = 0
         var after = 0
         myDecorations.forEachBit { _, index ->
@@ -451,19 +453,20 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
     private fun drawDebug(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics) {
         val myHolder = parent.getChildViewHolder(view) ?: return
         if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
-        val pos = myHolder.bindingAdapterPosition
+        val aPos = myHolder.absoluteAdapterPosition
+        val bPos = myHolder.bindingAdapterPosition
 
         ViewBounds.WithMargins.of(view, rect1, rectF, (1 shl HORIZONTAL) or (1 shl VERTICAL))
 
-        if (delegates && pos >= 0) {
-            c.drawDelegate(view, delegapter.delegateAt(pos), rect1.left, rect1.top, dm)
+        if (delegates && bPos >= 0) {
+            c.drawDelegate(view, delegapter.delegateAt(bPos), rect1.left, rect1.top, dm)
         }
 
         var myDecorations = 0L
         var lp = 0
         if (spaces &&
-            decorations.get(if (pos >= 0) pos else myHolder.layoutPosition.also { lp = it }).also { myDecorations = it } != 0L) {
-            val mergedPos = if (pos >= 0) pos else -1 - lp
+            decorations.get(if (aPos >= 0) aPos else myHolder.layoutPosition.also { lp = it }).also { myDecorations = it } != 0L) {
+            val mergedPos = if (bPos >= 0) bPos else -1 - lp
             var before = 0
             var after = 0
             myDecorations.forEachBit { _, index ->
