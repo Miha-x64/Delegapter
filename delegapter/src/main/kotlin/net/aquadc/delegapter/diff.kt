@@ -23,7 +23,7 @@ operator fun <D : Any> ((ViewGroup) -> VH<*, *, D>).plus(itemDiffer: DiffUtil.It
  * accepting separate [areItemsTheSame], [areContentsTheSame], and [getChangePayload] functions.
  */
 inline fun <D : Any> ((ViewGroup) -> VH<*, *, D>).diff(
-    crossinline areItemsTheSame: (oldItem: D, newItem: D) -> Boolean,
+    crossinline areItemsTheSame: (oldItem: D, newItem: D) -> Boolean = { _, _ -> true },
     crossinline areContentsTheSame: (oldItem: D, newItem: D) -> Boolean = Any::equals,
     crossinline getChangePayload: (oldItem: D, newItem: D) -> Any? = { _, _ -> null }
 ): DiffDelegate<D> = object : DelegatedDiffDelegate<D>(this) {
@@ -38,7 +38,7 @@ inline fun <D : Any> ((ViewGroup) -> VH<*, *, D>).diff(
 @Suppress("DeprecatedCallableAddReplaceWith", "UnusedReceiverParameter")
 @Deprecated("Why you wanna do this?!", level = DeprecationLevel.ERROR)
 inline fun <D : Any> DiffDelegate<D>.diff(
-    crossinline areItemsTheSame: (oldItem: D, newItem: D) -> Boolean,
+    crossinline areItemsTheSame: (oldItem: D, newItem: D) -> Boolean = { _, _ -> true },
     crossinline areContentsTheSame: (oldItem: D, newItem: D) -> Boolean = Any::equals,
     crossinline getChangePayload: (oldItem: D, newItem: D) -> Any? = { _, _ -> null }
 ): DiffDelegate<D> = throw AssertionError()
