@@ -184,13 +184,12 @@ open class Decor @PublishedApi internal constructor(
         if (drawable != null) {
             val intW = drawable.intrinsicWidth
             val intH = drawable.intrinsicHeight
-            val noIntW = intW <= 0
-            val noIntH = intH <= 0
+            val noIntW = intW < 0
+            val noIntH = intH < 0
             val badW = noIntW && (drawableGravity and FILL_HORIZONTAL) != FILL_HORIZONTAL
             val badH = noIntH && (drawableGravity and FILL_VERTICAL) != FILL_VERTICAL
             if (badW || badH) throw IllegalArgumentException(
-                "$drawable's intrinsic dimensions are " +
-                    "(${if (noIntW) "none" else intW}, ${if (noIntH) "none" else intH}), thus " +
+                "$drawable's intrinsic dimensions are ($intW, $intH), thus " +
                     (if (badW && badH) "" else if (badW) "horizontal component of " else "vertical component of ") +
                     "'drawableGravity' must be FILL, got ${GravityCompote.toString(drawableGravity)}"
             )
