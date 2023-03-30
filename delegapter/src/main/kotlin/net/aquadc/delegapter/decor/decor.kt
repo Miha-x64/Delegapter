@@ -201,7 +201,7 @@ open class Decor @PublishedApi internal constructor(
         }
 
         if (size == 0)
-            require(tmpInts1[orientation] > 0) {
+            require(tmpInts1[orientation] >= 0) {
                 (if (drawable == null) "drawable" else "$drawable's 'intrinsic${if (orientation == HORIZONTAL) "Width" else "Height"}'") +
                     " is not specified, thus 'size' is required"
             }
