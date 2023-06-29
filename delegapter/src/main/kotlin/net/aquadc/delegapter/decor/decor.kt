@@ -44,7 +44,7 @@ import kotlin.math.min
 ): RecyclerView.ItemDecoration = (
     if (debugDelegates || debugSpaces) DebugDecor(this, orientation, forAdapter, debugDelegates, debugSpaces)
     else Decor(this, orientation, forAdapter)
-    ).apply(configure)
+).apply(configure)
 
 /**
  * Build an [RecyclerView.ItemDecoration] for [this] adapter.
@@ -87,7 +87,7 @@ open class Decor @PublishedApi internal constructor(
      */
     fun before(
         next: DelegatePredicate,
-        size: Int = 0, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
+        size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
     ): Unit = addDecor(null, next, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
 
@@ -104,7 +104,7 @@ open class Decor @PublishedApi internal constructor(
      */
     fun after(
         prev: DelegatePredicate,
-        size: Int = 0, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
+        size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
     ): Unit = addDecor(prev, null, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
 
@@ -121,7 +121,7 @@ open class Decor @PublishedApi internal constructor(
      */
     fun around(
         delegate: DelegatePredicate,
-        size: Int = 0, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
+        size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
     ) {
         checkDimensions(size, drawable, drawableGravity)
@@ -144,7 +144,7 @@ open class Decor @PublishedApi internal constructor(
      */
     fun between(
         both: DelegatePredicate,
-        size: Int = 0, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
+        size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded,
         viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL,
     ): Unit = addDecor(both, both, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity)
@@ -163,7 +163,7 @@ open class Decor @PublishedApi internal constructor(
      */
     fun between(
         prev: DelegatePredicate, next: DelegatePredicate,
-        size: Int = 0, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
+        size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded,
         viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL,
     ): Unit = addDecor(prev, next, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity)
@@ -200,7 +200,7 @@ open class Decor @PublishedApi internal constructor(
             tmpInts1[1] = -1
         }
 
-        if (size == 0)
+        if (size < 0)
             require(tmpInts1[orientation] >= 0) {
                 (if (drawable == null) "drawable" else "$drawable's 'intrinsic${if (orientation == HORIZONTAL) "Width" else "Height"}'") +
                     " is not specified, thus 'size' is required"
@@ -225,7 +225,7 @@ open class Decor @PublishedApi internal constructor(
         drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
     ) {
         var len = objs.size
-        ints[len++] = if (size == 0) WRAP_CONTENT else ComplexDimension.createComplexDimension(size, unit)
+        ints[len++] = if (size < 0) WRAP_CONTENT else ComplexDimension.createComplexDimension(size, unit)
         ints[len++] = (drawableBounds.ordinal shl 16) or viewBoundsNegotiation.ordinal
         ints[len++] = drawableGravity
         objs += prev
