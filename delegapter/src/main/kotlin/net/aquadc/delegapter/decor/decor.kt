@@ -88,8 +88,8 @@ open class Decor @PublishedApi internal constructor(
     fun before(
         next: DelegatePredicate,
         size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
-        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
-    ): Unit = addDecor(null, next, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
+        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL, drawOver: Boolean = false,
+    ): Unit = addDecor(null, next, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity, drawOver)
 
     /**
      * Add decoration before matching [delegate][prev]s.
@@ -105,8 +105,8 @@ open class Decor @PublishedApi internal constructor(
     fun after(
         prev: DelegatePredicate,
         size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
-        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
-    ): Unit = addDecor(prev, null, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
+        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL, drawOver: Boolean = false,
+    ): Unit = addDecor(prev, null, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity, drawOver)
 
     /**
      * Add decoration before and after matching [delegate]s.
@@ -122,12 +122,12 @@ open class Decor @PublishedApi internal constructor(
     fun around(
         delegate: DelegatePredicate,
         size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
-        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL,
+        drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded, drawableGravity: Int = Gravity.FILL, drawOver: Boolean = false,
     ) {
         checkDimensions(size, drawable, drawableGravity)
         ensureSize(2)
-        insert(delegate, null, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
-        insert(null, delegate, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity)
+        insert(delegate, null, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity, drawOver)
+        insert(null, delegate, size, unit, drawable, drawableBounds, BoundsNegotiation.Average, drawableGravity, drawOver)
     }
 
     /**
@@ -146,8 +146,8 @@ open class Decor @PublishedApi internal constructor(
         both: DelegatePredicate,
         size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded,
-        viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL,
-    ): Unit = addDecor(both, both, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity)
+        viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL, drawOver: Boolean = false,
+    ): Unit = addDecor(both, both, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity, drawOver)
 
     /**
      * Add decoration between [prev] and [next] delegates.
@@ -165,19 +165,19 @@ open class Decor @PublishedApi internal constructor(
         prev: DelegatePredicate, next: DelegatePredicate,
         size: Int = WRAP_CONTENT, @ComplexDimensionUnit unit: Int = TypedValue.COMPLEX_UNIT_DIP,
         drawable: Drawable? = null, drawableBounds: ViewBounds = ViewBounds.Padded,
-        viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL,
-    ): Unit = addDecor(prev, next, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity)
+        viewBoundsNegotiation: BoundsNegotiation = BoundsNegotiation.Average, drawableGravity: Int = Gravity.FILL, drawOver: Boolean = false,
+    ): Unit = addDecor(prev, next, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity, drawOver)
 
     private val tmpInts1 = IntArray(2)
     private val tmpInts2 = IntArray(2)
     private fun addDecor(
         prev: DelegatePredicate?, next: DelegatePredicate?,
         size: Int, unit: Int,
-        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
+        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int, drawOver: Boolean,
     ) {
         checkDimensions(size, drawable, drawableGravity)
         ensureSize(1)
-        insert(prev, next, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity)
+        insert(prev, next, size, unit, drawable, drawableBounds, viewBoundsNegotiation, drawableGravity, drawOver)
     }
 
     private fun checkDimensions(size: Int, drawable: Drawable?, drawableGravity: Int) {
@@ -222,11 +222,11 @@ open class Decor @PublishedApi internal constructor(
 
     private fun insert(
         prev: DelegatePredicate?, next: DelegatePredicate?, size: Int, unit: Int,
-        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
+        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int, drawOver: Boolean,
     ) {
         var len = objs.size
         ints[len++] = if (size < 0) WRAP_CONTENT else ComplexDimension.createComplexDimension(size, unit)
-        ints[len++] = (drawableBounds.ordinal shl 16) or viewBoundsNegotiation.ordinal
+        ints[len++] = (if (drawOver) (1 shl 8) else 0) or (drawableBounds.ordinal shl 4) or viewBoundsNegotiation.ordinal
         ints[len++] = drawableGravity
         objs += prev
         objs += next
@@ -250,7 +250,7 @@ open class Decor @PublishedApi internal constructor(
             val nextDelegate = delegateAtOrNull(bPos + 1) // will just be null if next item is from another adapter
 
             repeat(objs.size / 3) { index ->
-                decorAt(ints, objs, index) { pp, np, _, _, _, _, _ ->
+                decorAt(ints, objs, index) { pp, np, _, _, _, _, _, _ ->
                     if (pp == null) {
                         if (np!!(myDelegate)) myDecorations = myDecorations or (1L shl index)
                     } else if (pp(myDelegate) && (np == null || nextDelegate != null && np(nextDelegate))) {
@@ -271,7 +271,7 @@ open class Decor @PublishedApi internal constructor(
         var before = 0
         var after = 0
         myDecorations.forEachBit { _, index ->
-            decorAt(ints, objs, index) { pp, _, dimension, drawable, _, _, _ ->
+            decorAt(ints, objs, index) { pp, _, dimension, drawable, _, _, _, _ ->
                 if (pp == null) {
                     before += size(mergedPos, dimension, dm, drawable, view)
                 } else {
@@ -304,13 +304,19 @@ open class Decor @PublishedApi internal constructor(
     private val rect2 = Rect()
     @JvmField protected val rectF = RectF()
     final override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+        draw(c, parent, false)
+    }
+    override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+        draw(c, parent, true)
+    }
+    private fun draw(c: Canvas, parent: RecyclerView, isOver: Boolean) {
         val dm = parent.resources.displayMetrics
         for (index in 0 until parent.childCount) {
-            drawFor(c, parent.getChildAt(index), parent, dm)
+            drawFor(c, parent.getChildAt(index), parent, dm, isOver)
         }
     }
 
-    private fun drawFor(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics) {
+    private fun drawFor(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics, isOver: Boolean) {
         val myHolder = parent.getChildViewHolder(view) ?: return
         if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
         val aPos = myHolder.absoluteAdapterPosition
@@ -323,38 +329,40 @@ open class Decor @PublishedApi internal constructor(
         var before = 0
         var after = 0
         myDecorations.forEachBit { _, index ->
-            decorAt(ints, objs, index) { pp, np, dimension, drawable, bounds, negotiation, gravity ->
-                drawable?.apply {
-                    level = mergedPos
-                    state = view.drawableState
-                    alpha = (view.alpha * 255).toInt()
-                    tmpInts1[0] = intrinsicWidth
-                    tmpInts1[1] = intrinsicHeight
-                }
-                val size =
-                    if (dimension == WRAP_CONTENT) tmpInts1[orientation]
-                    else complexToDimensionPixelOffset(dimension, dm)
+            decorAt(ints, objs, index) { pp, np, dimension, drawable, bounds, negotiation, gravity, drawOver ->
+                if (isOver == drawOver) {
+                    val size =
+                        if (dimension == WRAP_CONTENT) tmpInts1[orientation]
+                        else complexToDimensionPixelOffset(dimension, dm)
 
-                if (drawable != null) {
-                    ViewBounds.WithMargins.of(view, rect1, rectF, 1 shl orientation)
-                    bounds.of(view, rect1, rectF, 1 shl notOrientation)
-
-                    val dir = view.layoutDirection
-                    if (pp == null) {
-                        rect1.locateBefore(before, size)
-                    } else {
-                        rect1.locateAfter(after, size)
-                        if (np != null) parent.findViewHolderForLayoutPosition(lp + 1)?.itemView?.let { nextView ->
-                            negotiateBounds(negotiation, dir, bounds, nextView)
+                    if (drawable != null) {
+                        drawable.apply {
+                            level = mergedPos
+                            state = view.drawableState
+                            alpha = (view.alpha * 255).toInt()
+                            tmpInts1[0] = intrinsicWidth
+                            tmpInts1[1] = intrinsicHeight
                         }
-                    }
+                        ViewBounds.WithMargins.of(view, rect1, rectF, 1 shl orientation)
+                        bounds.of(view, rect1, rectF, 1 shl notOrientation)
 
-                    Gravity.apply(gravity, tmpInts1[0], tmpInts1[1], rect1, rect2, dir)
-                    drawable.bounds = rect2
-                    drawable.draw(c)
+                        val dir = view.layoutDirection
+                        if (pp == null) {
+                            rect1.locateBefore(before, size)
+                        } else {
+                            rect1.locateAfter(after, size)
+                            if (np != null) parent.findViewHolderForLayoutPosition(lp + 1)?.itemView?.let { nextView ->
+                                negotiateBounds(negotiation, dir, bounds, nextView)
+                            }
+                        }
+
+                        Gravity.apply(gravity, tmpInts1[0], tmpInts1[1], rect1, rect2, dir)
+                        drawable.bounds = rect2
+                        drawable.draw(c)
+                    }
+                    if (pp == null) before += size
+                    else after += size
                 }
-                if (pp == null) before += size
-                else after += size
             }
         }
     }
@@ -415,19 +423,19 @@ private inline fun decorAt(
     ints: IntArray, objs: ArrayList<*>,
     index: Int, block: (
         prev: DelegatePredicate?, next: DelegatePredicate?, size: Int,
-        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int,
+        drawable: Drawable?, drawableBounds: ViewBounds, viewBoundsNegotiation: BoundsNegotiation, drawableGravity: Int, drawOver: Boolean,
     ) -> Unit
 ) {
     var i = 3 * index
     val size = ints[i]
     val prev = objs[i++] as DelegatePredicate?
-    val bounds = ints[i]
+    val flags = ints[i]
     val next = objs[i++] as DelegatePredicate?
     val drawableGravity = ints[i]
     val drawable = objs[i++] as Drawable?
     block(
         prev, next, size,
-        drawable, VIEW_BOUNDS_VALUES[bounds ushr 16], BOUNDS_NEGOTIATION_VALUES[bounds and 0xFFFF], drawableGravity,
+        drawable, VIEW_BOUNDS_VALUES[flags ushr 4 and 0xF], BOUNDS_NEGOTIATION_VALUES[flags and 0xF], drawableGravity, flags ushr 8 and 1 == 1
     )
 }
 private val VIEW_BOUNDS_VALUES = ViewBounds.values()
@@ -443,6 +451,7 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val fm = Paint.FontMetricsInt()
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+        super.onDrawOver(c, parent, state)
         val dm = parent.resources.displayMetrics
         paint.strokeWidth = dm.density // 1dp
         for (index in 0 until parent.childCount) {
@@ -469,7 +478,7 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
             var before = 0
             var after = 0
             myDecorations.forEachBit { _, index ->
-                decorAt(ints, objs, index) { pp, np, dimension, drawable, _, _, _ ->
+                decorAt(ints, objs, index) { pp, np, dimension, drawable, _, _, _, _ ->
                     if (pp == null) {
                         setColorWithAlpha(FOREGROUND_BEFORE, view)
                         before += c.drawSpace(mergedPos, parent, dimension, before, rect1, -1, dm, drawable, view)
