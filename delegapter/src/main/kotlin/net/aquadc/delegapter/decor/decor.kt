@@ -331,18 +331,19 @@ open class Decor @PublishedApi internal constructor(
         myDecorations.forEachBit { _, index ->
             decorAt(ints, objs, index) { pp, np, dimension, drawable, bounds, negotiation, gravity, drawOver ->
                 if (isOver == drawOver) {
+                    drawable?.apply {
+                        level = mergedPos
+                        state = view.drawableState
+                        alpha = (view.alpha * 255).toInt()
+                        tmpInts1[0] = intrinsicWidth
+                        tmpInts1[1] = intrinsicHeight
+                    }
+
                     val size =
                         if (dimension == WRAP_CONTENT) tmpInts1[orientation]
                         else complexToDimensionPixelOffset(dimension, dm)
 
                     if (drawable != null) {
-                        drawable.apply {
-                            level = mergedPos
-                            state = view.drawableState
-                            alpha = (view.alpha * 255).toInt()
-                            tmpInts1[0] = intrinsicWidth
-                            tmpInts1[1] = intrinsicHeight
-                        }
                         ViewBounds.WithMargins.of(view, rect1, rectF, 1 shl orientation)
                         bounds.of(view, rect1, rectF, 1 shl notOrientation)
 
