@@ -6,7 +6,6 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.util.DisplayMetrics
-import android.util.SparseLongArray
 import android.util.TypedValue
 import android.util.TypedValue.complexToDimensionPixelOffset
 import android.view.Gravity
@@ -26,6 +25,8 @@ import net.aquadc.delegapter.adapter.DelegatedAdapter
 import net.aquadc.delegapter.decor.ComplexDimension.ComplexDimensionUnit
 import net.aquadc.delegapter.drawFun
 import net.aquadc.delegapter.measureFun
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
 import kotlin.math.min
 
 /**
@@ -233,8 +234,12 @@ open class Decor @PublishedApi internal constructor(
         objs += drawable
     }
 
-    @JvmField
-    protected val decorations = SparseLongArray()
+    // The RV may re-layout and mark some VHs removed.
+    // This will make them unrecognizable, and irrelevant to current data set.
+    // Thus, we must hold VH-to-decoration and VH-to-nextVH (if required) mapping ourselves,
+    // otherwise we couldn't show decorations for disappearing items.
+    @JvmField protected val decorations = WeakHashMap<RecyclerView.ViewHolder, Long>()
+    private val nexts = WeakHashMap<RecyclerView.ViewHolder, WeakReference<RecyclerView.ViewHolder>>()
     final override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         val myHolder = parent.getChildViewHolder(view) ?: return outRect.setEmpty()
         if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return outRect.setEmpty()
@@ -243,24 +248,40 @@ open class Decor @PublishedApi internal constructor(
         var myDecorations = 0L
         val mergedPos = if (aPos < 0 || bPos < 0) {
             val lp = myHolder.layoutPosition
-            myDecorations = decorations.get(lp)
+            myDecorations = decorations.get(myHolder) ?: 0L
             -1 - lp
         } else {
             val myDelegate = delegapter.delegateAt(bPos)
             val nextDelegate = delegateAtOrNull(bPos + 1) // will just be null if next item is from another adapter
+            var needNext = false
 
             repeat(objs.size / 3) { index ->
                 decorAt(ints, objs, index) { pp, np, _, _, _, _, _, _ ->
                     if (pp == null) {
                         if (np!!(myDelegate)) myDecorations = myDecorations or (1L shl index)
-                    } else if (pp(myDelegate) && (np == null || nextDelegate != null && np(nextDelegate))) {
-                        myDecorations = myDecorations or (1L shl index)
+                    } else if (pp(myDelegate)) {
+                        if (np == null) {
+                            myDecorations = myDecorations or (1L shl index)
+                        } else if (nextDelegate != null && np(nextDelegate)) {
+                            myDecorations = myDecorations or (1L shl index)
+                            needNext = true
+                        }
                     }
                 }
             }
 
-            if (myDecorations == 0L) decorations.delete(aPos)
-            else decorations.put(aPos, myDecorations)
+            if (myDecorations == 0L) {
+                decorations.remove(myHolder)
+                nexts.remove(myHolder)
+            } else {
+                decorations.put(myHolder, myDecorations)
+                if (needNext) {
+                    val next = parent.findViewHolderForLayoutPosition(myHolder.layoutPosition + 1)
+                    if (nexts.get(myHolder)?.get() !== next) nexts.put(myHolder, next?.let(::WeakReference))
+                } else {
+                    nexts.remove(myHolder)
+                }
+            }
             bPos
         }
 
@@ -316,11 +337,9 @@ open class Decor @PublishedApi internal constructor(
     private fun drawFor(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics, isOver: Boolean) {
         val myHolder = parent.getChildViewHolder(view) ?: return
         if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return
-        val aPos = myHolder.absoluteAdapterPosition
         val bPos = myHolder.bindingAdapterPosition
         val lp = myHolder.layoutPosition
-        val myDecorations = decorations.get(if (aPos >= 0) aPos else lp)
-        if (myDecorations == 0L) return
+        val myDecorations = decorations.get(myHolder) ?: return
 
         val mergedPos = if (bPos >= 0) bPos else -1 - lp
         var before = 0
@@ -349,8 +368,19 @@ open class Decor @PublishedApi internal constructor(
                             rect1.locateBefore(before, size)
                         } else {
                             rect1.locateAfter(after, size)
-                            if (np != null) parent.findViewHolderForLayoutPosition(lp + 1)?.itemView?.let { nextView ->
-                                negotiateBounds(negotiation, dir, bounds, nextView)
+                            if (np != null) {
+                                val next =
+                                    if (lp >= 0 &&
+                                        !(myHolder.itemView.layoutParams as RecyclerView.LayoutParams)
+                                            .let { it.viewNeedsUpdate() || it.isItemRemoved })
+                                        parent.findViewHolderForLayoutPosition(lp + 1).also {
+                                            if (nexts.get(myHolder)?.get() !== it)
+                                                nexts.put(myHolder, it?.let(::WeakReference))
+                                        }
+                                    else nexts.get(myHolder)?.get()
+                                next?.itemView?.let { nextView ->
+                                    negotiateBounds(negotiation, dir, bounds, nextView)
+                                }
                             }
                         }
 
@@ -459,7 +489,6 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
     private fun drawDebug(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics) {
         val myHolder = parent.getChildViewHolder(view) ?: return
         if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return
-        val aPos = myHolder.absoluteAdapterPosition
         val bPos = myHolder.bindingAdapterPosition
 
         ViewBounds.WithMargins.of(view, rect1, rectF, (1 shl HORIZONTAL) or (1 shl VERTICAL))
@@ -469,10 +498,8 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
         }
 
         var myDecorations = 0L
-        var lp = 0
-        if (spaces &&
-            decorations.get(if (aPos >= 0) aPos else myHolder.layoutPosition.also { lp = it }).also { myDecorations = it } != 0L) {
-            val mergedPos = if (bPos >= 0) bPos else -1 - lp
+        if (spaces && (decorations.get(myHolder) ?: 0L).also { myDecorations = it } != 0L) {
+            val mergedPos = if (bPos >= 0) bPos else -1 - myHolder.layoutPosition
             var before = 0
             var after = 0
             myDecorations.forEachBit { _, index ->
