@@ -237,7 +237,7 @@ open class Decor @PublishedApi internal constructor(
     protected val decorations = SparseLongArray()
     final override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         val myHolder = parent.getChildViewHolder(view) ?: return outRect.setEmpty()
-        if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return outRect.setEmpty()
+        if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return outRect.setEmpty()
         val aPos = myHolder.absoluteAdapterPosition
         val bPos = myHolder.bindingAdapterPosition
         var myDecorations = 0L
@@ -318,7 +318,7 @@ open class Decor @PublishedApi internal constructor(
 
     private fun drawFor(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics, isOver: Boolean) {
         val myHolder = parent.getChildViewHolder(view) ?: return
-        if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
+        if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return
         val aPos = myHolder.absoluteAdapterPosition
         val bPos = myHolder.bindingAdapterPosition
         val lp = myHolder.layoutPosition
@@ -461,7 +461,7 @@ private val BOUNDS_NEGOTIATION_VALUES = BoundsNegotiation.values()
     }
     private fun drawDebug(c: Canvas, view: View, parent: RecyclerView, dm: DisplayMetrics) {
         val myHolder = parent.getChildViewHolder(view) ?: return
-        if (forAdapter != null && myHolder.bindingAdapter != forAdapter) return
+        if (forAdapter !== null && myHolder.bindingAdapter !== forAdapter) return
         val aPos = myHolder.absoluteAdapterPosition
         val bPos = myHolder.bindingAdapterPosition
 
