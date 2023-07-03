@@ -272,11 +272,8 @@ open class Decor @PublishedApi internal constructor(
         var after = 0
         myDecorations.forEachBit { _, index ->
             decorAt(ints, objs, index) { pp, _, dimension, drawable, _, _, _, _ ->
-                if (pp == null) {
-                    before += size(mergedPos, dimension, dm, drawable, view)
-                } else {
-                    after += size(mergedPos, dimension, dm, drawable, view)
-                }
+                val size = size(mergedPos, dimension, dm, drawable, view)
+                if (pp == null) before += size else after += size
             }
         }
 
