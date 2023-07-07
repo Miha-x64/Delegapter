@@ -15,7 +15,7 @@ import java.util.function.Predicate
  * Adapter for a single viewType.
  * @author Mike Gorünóv
  */
-class SingleTypeAdapter<D>(
+open class SingleTypeAdapter<D>(
     private val delegate: Delegate<D>,
     items: List<D> = emptyList(),
     parent: MutableDelegapter? = null,

@@ -12,7 +12,7 @@ import net.aquadc.delegapter.VH
  * Adapter for a single viewType and item repeated several times.
  * @author Mike Gorünóv
  */
-class RepeatAdapter<D>(
+open class RepeatAdapter<D>(
     private val delegate: Delegate<D>,
     private val item: D,
     size: Int = 1,

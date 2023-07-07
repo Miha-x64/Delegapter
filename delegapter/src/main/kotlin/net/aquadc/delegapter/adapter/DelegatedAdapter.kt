@@ -16,16 +16,16 @@ open class DelegatedAdapter @JvmOverloads constructor(
 
     @JvmField val data = Delegapter(this, parent, initialCapacity)
 
-    final override fun getItemCount(): Int =
+    override fun getItemCount(): Int =
         data.size
 
-    final override fun getItemViewType(position: Int): Int =
+    override fun getItemViewType(position: Int): Int =
         data.viewTypeAt(position)
 
-    final override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
         data.createViewHolder(parent, viewType)
 
-    final override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>): Unit =
+    override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>): Unit =
         data.bindViewHolder(holder, position, payloads)
 
 }
