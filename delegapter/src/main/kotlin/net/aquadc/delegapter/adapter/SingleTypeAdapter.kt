@@ -2,8 +2,10 @@ package net.aquadc.delegapter.adapter
 
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import net.aquadc.delegapter.Delegate
+import net.aquadc.delegapter.DiffDelegate
 import net.aquadc.delegapter.MutableDelegapter
 import net.aquadc.delegapter.RrAL
 import net.aquadc.delegapter.VH
@@ -16,14 +18,14 @@ import java.util.function.Predicate
  * @author Mike Gorünóv
  */
 open class SingleTypeAdapter<D>(
-    private val delegate: Delegate<D>,
+    @JvmField protected val delegate: Delegate<D>,
     items: List<D> = emptyList(),
     parent: MutableDelegapter? = null,
 ) : VHAdapter<VH<*, *, D>>() {
 
     private val viewType = parent?.viewTypeFor(delegate) ?: 0
 
-    val items: MutableList<D> = ObservableList(items, this)
+    open val items: MutableList<D> = ObservableList(items, this)
 
     override fun getItemCount(): Int =
         items.size
@@ -39,12 +41,60 @@ open class SingleTypeAdapter<D>(
 
 }
 
+open class SingleTypeDiffAdapter<D : Any>(
+    delegate: DiffDelegate<D>,
+    items: List<D> = emptyList(),
+    parent: MutableDelegapter? = null,
+) : SingleTypeAdapter<D>(delegate, items, parent) {
+
+    private var differ: Differ<D>? = null
+
+    override var items: MutableList<D>
+        get() = super.items
+        set(value) { setItems(value) }
+
+    private fun setItems(value: MutableList<D>, detectMoves: Boolean = true) {
+        when {
+            super.items.isEmpty() -> super.items.addAll(value)
+            value.isEmpty() -> super.items.clear()
+            else -> {
+                val copy = RrAL(value)
+                @Suppress("UNCHECKED_CAST")
+                val differ = differ ?: Differ(delegate as DiffUtil.ItemCallback<D>).also { differ = it }
+                differ.old = (super.items as ObservableList).list
+                differ.new = copy
+                DiffUtil.calculateDiff(differ, detectMoves).dispatchUpdatesTo(this)
+                differ.old = null
+                differ.new = null
+                (super.items as ObservableList).list = copy
+            }
+        }
+    }
+
+}
+
+private class Differ<T : Any>(private val itemCallback: DiffUtil.ItemCallback<T>) : DiffUtil.Callback() {
+    @JvmField var old: List<T>? = null
+    @JvmField var new: List<T>? = null
+    override fun getOldListSize(): Int = old!!.size
+    override fun getNewListSize(): Int = new!!.size
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+        itemCallback.areItemsTheSame(old!![oldItemPosition], new!![newItemPosition])
+
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+        itemCallback.areContentsTheSame(old!![oldItemPosition], new!![newItemPosition])
+
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? =
+        itemCallback.getChangePayload(old!![oldItemPosition], new!![newItemPosition])
+}
+
+
 private class ObservableList<D>(
     list: List<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
 ) : AbstractMutableList<D>() {
 
-    private val list = RrAL(list)
+    @JvmField internal var list = RrAL(list)
 
     override val size: Int
         get() = list.size
