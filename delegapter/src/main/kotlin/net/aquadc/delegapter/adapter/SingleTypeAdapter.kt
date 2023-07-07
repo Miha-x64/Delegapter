@@ -51,21 +51,21 @@ open class SingleTypeDiffAdapter<D : Any>(
 
     override var items: MutableList<D>
         get() = super.items
-        set(value) { setItems(value) }
+        set(value/*: wannabe List<D>*/) { setItems(value) }
 
-    private fun setItems(value: MutableList<D>, detectMoves: Boolean = true) {
+    fun setItems(items: List<D>, detectMoves: Boolean = true) {
         when {
-            super.items.isEmpty() -> super.items.addAll(value)
-            value.isEmpty() -> super.items.clear()
+            super.items.isEmpty() -> super.items.addAll(items)
+            items.isEmpty() -> super.items.clear()
             else -> {
                 @Suppress("UNCHECKED_CAST")
                 val differ = differ ?: Differ(delegate as DiffUtil.ItemCallback<D>).also { differ = it }
                 differ.old = (super.items as ObservableList).list
-                differ.new = value
+                differ.new = items
                 DiffUtil.calculateDiff(differ, detectMoves).dispatchUpdatesTo(this)
                 differ.old = null
                 differ.new = null
-                (super.items as ObservableList).list = value
+                (super.items as ObservableList).list = items
             }
         }
     }
