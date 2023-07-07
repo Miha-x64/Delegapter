@@ -58,15 +58,14 @@ open class SingleTypeDiffAdapter<D : Any>(
             super.items.isEmpty() -> super.items.addAll(value)
             value.isEmpty() -> super.items.clear()
             else -> {
-                val copy = RrAL(value)
                 @Suppress("UNCHECKED_CAST")
                 val differ = differ ?: Differ(delegate as DiffUtil.ItemCallback<D>).also { differ = it }
                 differ.old = (super.items as ObservableList).list
-                differ.new = copy
+                differ.new = value
                 DiffUtil.calculateDiff(differ, detectMoves).dispatchUpdatesTo(this)
                 differ.old = null
                 differ.new = null
-                (super.items as ObservableList).list = copy
+                (super.items as ObservableList).list = value
             }
         }
     }
@@ -90,11 +89,12 @@ private class Differ<T : Any>(private val itemCallback: DiffUtil.ItemCallback<T>
 
 
 private class ObservableList<D>(
-    list: List<D>,
+    @JvmField var list: List<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
 ) : AbstractMutableList<D>() {
 
-    @JvmField internal var list = RrAL(list)
+    private val mutableList get() =
+        (list as? RrAL) ?: RrAL(list).also { list = it }
 
     override val size: Int
         get() = list.size
@@ -103,24 +103,24 @@ private class ObservableList<D>(
         list[index]
 
     override fun add(index: Int, element: D) {
-        list.add(index, element)
+        mutableList.add(index, element)
         callback.notifyItemInserted(index)
     }
 
     override fun addAll(index: Int, elements: Collection<D>): Boolean {
-        val a = list.addAll(index, elements)
+        val a = mutableList.addAll(index, elements)
         callback.notifyItemRangeInserted(index, elements.size)
         return a
     }
 
     override fun set(index: Int, element: D): D {
-        val s = list.set(index, element)
+        val s = mutableList.set(index, element)
         callback.notifyItemChanged(index)
         return s
     }
 
     override fun removeAt(index: Int): D {
-        val r = list.removeAt(index)
+        val r = mutableList.removeAt(index)
         callback.notifyItemRemoved(index)
         return r
     }
@@ -140,17 +140,17 @@ private class ObservableList<D>(
     private inline fun batchRemoveIf(predicate: (Int) -> Boolean): Boolean {
         var removed = 0
         for (i in list.indices) if (predicate(i)) {
-            list.markForRemoval(i)
+            mutableList.markForRemoval(i)
             callback.notifyItemRemoved(i - removed++)
         }
         return if (removed > 0) {
-            list.commitRemovals()
+            mutableList.commitRemovals()
             true
         } else false
     }
 
     override fun removeRange(fromIndex: Int, toIndex: Int) {
-        list.removeRange(fromIndex, toIndex)
+        mutableList.removeRange(fromIndex, toIndex)
         callback.notifyItemRangeRemoved(fromIndex, toIndex)
     }
 }
