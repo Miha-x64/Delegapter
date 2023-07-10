@@ -12,8 +12,8 @@ import net.aquadc.delegapter.decor.DelegatePredicate
  */
 abstract class Delegapter protected constructor(initialCapacity: Int) {
 
-    @JvmField protected var itemDelegates: RrAL<Delegate<*>> = RrAL.create(initialCapacity)
-    @JvmField protected var items: RrAL<Any?> = RrAL.create(initialCapacity)
+    @JvmField protected var itemDelegates: RemoveRangeArrayList<Delegate<*>> = RemoveRangeArrayList.create(initialCapacity)
+    @JvmField protected var items: RemoveRangeArrayList<Any?> = RemoveRangeArrayList.create(initialCapacity)
 
     // common mutable interface
 

@@ -20,7 +20,7 @@ class MutableDelegapter(
     constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1) :
         this(AdapterListUpdateCallback(target), parent, initialCapacity)
 
-    private val delegateList: RrAL<Delegate<*>>
+    private val delegateList: RemoveRangeArrayList<Delegate<*>>
     private val delegateTypes: HashMap<Delegate<*>, Int>
 
     private var repeat: RepeatList<Delegate<*>>? = null
@@ -28,7 +28,7 @@ class MutableDelegapter(
 
     init {
         if (parent == null) {
-            delegateList = RrAL.create(initialCapacity)
+            delegateList = RemoveRangeArrayList.create(initialCapacity)
             delegateTypes = if (initialCapacity < 0) HashMap() else HashMap(initialCapacity)
         } else {
             delegateList = parent.delegateList

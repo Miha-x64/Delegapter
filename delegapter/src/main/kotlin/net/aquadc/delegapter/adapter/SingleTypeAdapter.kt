@@ -7,7 +7,8 @@ import androidx.recyclerview.widget.RecyclerView.Adapter
 import net.aquadc.delegapter.Delegate
 import net.aquadc.delegapter.DiffDelegate
 import net.aquadc.delegapter.MutableDelegapter
-import net.aquadc.delegapter.RrAL
+import net.aquadc.delegapter.RemoveRangeArrayList
+import net.aquadc.delegapter.RemoveRangeMutableList
 import net.aquadc.delegapter.VH
 import net.aquadc.delegapter.commitRemovals
 import net.aquadc.delegapter.markForRemoval
@@ -25,7 +26,7 @@ open class SingleTypeAdapter<D>(
 
     private val viewType = parent?.viewTypeFor(delegate) ?: 0
 
-    open val items: MutableList<D> = ObservableList(items, this)
+    open val items: RemoveRangeMutableList<D> = ObservableList(items, this)
 
     override fun getItemCount(): Int =
         items.size
@@ -49,14 +50,18 @@ open class SingleTypeDiffAdapter<D : Any>(
 
     private var differ: Differ<D>? = null
 
-    override var items: MutableList<D>
+    override var items: RemoveRangeMutableList<D>
         get() = super.items
         set(value/*: wannabe List<D>*/) { setItems(value) }
 
     fun setItems(items: List<D>, detectMoves: Boolean = true) {
         when {
-            super.items.isEmpty() -> super.items.addAll(items)
-            items.isEmpty() -> super.items.clear()
+            super.items.isEmpty() -> {
+                (super.items as ObservableList).list = items
+                notifyItemRangeInserted(0, items.size)
+            }
+            items.isEmpty() ->
+                super.items.clear()
             else -> {
                 @Suppress("UNCHECKED_CAST")
                 val differ = differ ?: Differ(delegate as DiffUtil.ItemCallback<D>).also { differ = it }
@@ -91,10 +96,10 @@ private class Differ<T : Any>(private val itemCallback: DiffUtil.ItemCallback<T>
 private class ObservableList<D>(
     @JvmField var list: List<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
-) : AbstractMutableList<D>() {
+) : AbstractMutableList<D>(), RemoveRangeMutableList<D> {
 
     private val mutableList get() =
-        (list as? RrAL) ?: RrAL(list).also { list = it }
+        (list as? RemoveRangeArrayList) ?: RemoveRangeArrayList(list).also { list = it }
 
     override val size: Int
         get() = list.size
@@ -150,7 +155,21 @@ private class ObservableList<D>(
     }
 
     override fun removeRange(fromIndex: Int, toIndex: Int) {
-        mutableList.removeRange(fromIndex, toIndex)
+        val list = list
+        when {
+            list is RemoveRangeArrayList -> list.removeRange(fromIndex, toIndex)
+            // avoid touching removed items:
+            fromIndex == 0 -> this.list = if (toIndex == list.size) emptyList() else list.subList(toIndex, list.size)
+            toIndex == list.size -> this.list = list.subList(0, fromIndex)
+            else -> {
+                val newList = RemoveRangeArrayList<D>(list.lastIndex)
+                if (fromIndex == 1)
+                    newList.add(list[0]) else newList.addAll(list.subList(0, fromIndex))
+                if (toIndex == list.lastIndex)
+                    newList.add(list.last()) else newList.addAll(list.subList(toIndex, list.size))
+                this.list = newList
+            }
+        }
         callback.notifyItemRangeRemoved(fromIndex, toIndex)
     }
 }
