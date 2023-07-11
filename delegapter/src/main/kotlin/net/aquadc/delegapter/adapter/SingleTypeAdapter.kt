@@ -42,6 +42,10 @@ open class SingleTypeAdapter<D>(
 
 }
 
+/**
+ * Adapter for a single diffable viewType.
+ * @author Mike Gorünóv
+ */
 open class SingleTypeDiffAdapter<D : Any>(
     delegate: DiffDelegate<D>,
     items: List<D> = emptyList(),
@@ -52,9 +56,9 @@ open class SingleTypeDiffAdapter<D : Any>(
 
     override var items: RemoveRangeMutableList<D>
         get() = super.items
-        set(value/*: wannabe List<D>*/) { setItems(value) }
+        set(value/*: wannabe List<D>*/) { replace(value) }
 
-    fun setItems(items: List<D>, detectMoves: Boolean = true) {
+    open fun replace(items: List<D>, detectMoves: Boolean = true) {
         when {
             super.items.isEmpty() -> {
                 (super.items as ObservableList).list = items
