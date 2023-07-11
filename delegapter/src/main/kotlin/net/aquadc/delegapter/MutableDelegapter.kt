@@ -120,10 +120,11 @@ class MutableDelegapter(
         target.onRemoved(0, size)
     }
 
-    inline fun replace(detectMoves: Boolean = true, initialCapacity: Int = -1, block: DiffDelegapter.() -> Unit) {
+    // adapter-specific things
+
+    inline fun replace(detectMoves: Boolean = true, initialCapacity: Int = -1, block: Delegapter.() -> Unit) {
         commit(detectMoves, DiffDelegapter(initialCapacity).apply(block))
     }
-
     @PublishedApi internal fun commit(detectMoves: Boolean, tmp: DiffDelegapter) {
         val differ = differ ?: Differ().also { differ = it }
         differ.old = this
@@ -133,8 +134,7 @@ class MutableDelegapter(
         differ.new = null
         tmp.commit()
     }
-
-    inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
+    @PublishedApi internal inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
         override fun <D : Any> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean {
             items.add(atIndex, item)
             itemDelegates.add(atIndex, delegate)
@@ -153,24 +153,23 @@ class MutableDelegapter(
                 tryAddDelegate(delegate)
             }
 
-        private fun tryAddDelegate(delegate: DiffDelegate<*>) =
-            if (delegateTypes.containsKey(delegate)) false
-            else { delegateTypes[delegate] = delegateTypes.size; delegateList.add(delegate) }
-
-        internal fun commit() {
+        fun commit() {
             this@MutableDelegapter.items = items
             this@MutableDelegapter.itemDelegates = itemDelegates
         }
     }
 
-    // use like an Adapter
-
     fun viewTypeAt(position: Int): Int =
         delegateTypes[itemDelegates[position]]!!
 
+    @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("this.forViewType(viewType)(parent)"))
     fun createViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
         delegateList[viewType](parent)
 
+    fun forViewType(viewType: Int): Delegate<*> =
+        delegateList[viewType]
+
+    @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("(holder as VH<*, *, Any?>).bind(this.itemAt(position), position, payloads)"))
     fun bindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any> = emptyList()): Unit =
         @Suppress("UNCHECKED_CAST") (holder as VH<*, *, Any?>).bind(items[position], position, payloads)
 

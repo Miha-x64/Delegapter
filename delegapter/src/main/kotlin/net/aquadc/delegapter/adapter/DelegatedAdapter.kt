@@ -23,9 +23,9 @@ open class DelegatedAdapter @JvmOverloads constructor(
         data.viewTypeAt(position)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-        data.createViewHolder(parent, viewType)
+        data.forViewType(viewType)(parent)
 
     override fun onBindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any>): Unit =
-        data.bindViewHolder(holder, position, payloads)
+        (holder as VH<*, *, Any?>).bind(data.itemAt(position), position, payloads)
 
 }
