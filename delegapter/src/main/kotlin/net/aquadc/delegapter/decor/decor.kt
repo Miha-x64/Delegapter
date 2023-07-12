@@ -75,6 +75,11 @@ open class Decor @PublishedApi internal constructor(
     @JvmField protected var ints = IntArray(6) // size, bounds, drawableGravity: 3 ints per decoration
     @JvmField protected val objs = ArrayList<Any?>() // prev, next, drawable: 3 objs per decoration
 
+    // 000000000000000000000000000000ou
+    // flag #0 “u” = 1<<0: draw under
+    // flag #1 “o” = 1<<1: draw over
+    private var whereToDraw: Int = 0
+
     /**
      * Add decoration before matching [delegate][next]s.
      * Either [size] or [drawable] must be specified.
@@ -232,6 +237,7 @@ open class Decor @PublishedApi internal constructor(
         objs += prev
         objs += next
         objs += drawable
+        whereToDraw = whereToDraw or (if (drawOver) 2 else 1)
     }
 
     // The RV may re-layout and mark some VHs removed.
@@ -322,10 +328,12 @@ open class Decor @PublishedApi internal constructor(
     private val rect2 = Rect()
     @JvmField protected val rectF = RectF()
     final override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-        draw(c, parent, false)
+        if ((whereToDraw and 1) == 1)
+            draw(c, parent, false)
     }
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-        draw(c, parent, true)
+        if ((whereToDraw and 2) == 2)
+            draw(c, parent, true)
     }
     private fun draw(c: Canvas, parent: RecyclerView, isOver: Boolean) {
         val dm = parent.resources.displayMetrics
