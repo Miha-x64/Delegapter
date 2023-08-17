@@ -17,9 +17,9 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     // common mutable interface
 
-    abstract fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int = size): Boolean
-    abstract fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean
-    abstract fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int = size): Boolean
+    abstract fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int = size)
+    abstract fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int)
+    abstract fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int = size)
 
     // use like a List
 
@@ -136,7 +136,7 @@ inline fun <D> Delegapter.findBy(
 inline val Delegapter.lastIndex: Int
     get() = size - 1
 
-fun Delegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Boolean = add(delegate, Unit, atIndex)
-fun Delegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Boolean = set(delegate, Unit, atIndex)
-fun MutableDelegapter.add(delegate: Delegate<in Unit>, atIndex: Int = size): Boolean = add(delegate, Unit, atIndex)
-fun MutableDelegapter.set(delegate: Delegate<in Unit>, atIndex: Int): Boolean = set(delegate, Unit, atIndex)
+fun Delegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Unit = add(delegate, Unit, atIndex)
+fun Delegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
+fun MutableDelegapter.add(delegate: Delegate<in Unit>, atIndex: Int = size): Unit = add(delegate, Unit, atIndex)
+fun MutableDelegapter.set(delegate: Delegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)

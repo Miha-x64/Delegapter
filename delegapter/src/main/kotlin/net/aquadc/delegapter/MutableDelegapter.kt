@@ -40,38 +40,42 @@ class MutableDelegapter(
 
     // configure like a MutableList
 
-    override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean =
+    override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Unit =
         add(delegate as Delegate<in D>, item, atIndex)
-    @JvmOverloads fun <D> add(delegate: Delegate<in D>, item: D, atIndex: Int = size): Boolean {
+    @JvmOverloads fun <D> add(delegate: Delegate<in D>, item: D, atIndex: Int = size) {
         items.add(atIndex, item)
         itemDelegates.add(atIndex, delegate)
         target.onInserted(atIndex, 1)
-        return tryAddDelegate(delegate)
+        tryAddDelegate(delegate)
     }
 
-    override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean =
+    override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Unit =
         set(delegate as Delegate<in D>, item, atIndex)
-    @JvmOverloads fun <D> set(delegate: Delegate<in D>, item: D, atIndex: Int, payload: Any? = null): Boolean {
+    @JvmOverloads fun <D> set(delegate: Delegate<in D>, item: D, atIndex: Int, payload: Any? = null) {
         items[atIndex] = item
         itemDelegates[atIndex] = delegate
         target.onChanged(atIndex, 1, payload)
-        return tryAddDelegate(delegate)
+        tryAddDelegate(delegate)
     }
 
-    override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int): Boolean =
+    override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int): Unit =
         addAll(delegate as Delegate<in D>, items, atIndex)
-    @JvmOverloads fun <D> addAll(delegate: Delegate<in D>, items: Collection<D>, atIndex: Int = size): Boolean =
-        if (items.isEmpty()) false else {
+    @JvmOverloads fun <D> addAll(delegate: Delegate<in D>, items: Collection<D>, atIndex: Int = size) {
+        if (items.isNotEmpty()) {
             this.items.addAll(atIndex, items)
             (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })
                 .of(delegate, items.size) { itemDelegates.addAll(atIndex, it) }
             target.onInserted(atIndex, items.size)
             tryAddDelegate(delegate)
         }
+    }
 
-    private fun tryAddDelegate(delegate: Delegate<*>) =
-        if (delegateTypes.containsKey(delegate)) false
-        else { delegateTypes[delegate] = delegateTypes.size; delegateList.add(delegate) }
+    private fun tryAddDelegate(delegate: Delegate<*>) {
+        if (!delegateTypes.containsKey(delegate)) {
+            delegateTypes[delegate] = delegateTypes.size;
+            delegateList.add(delegate)
+        }
+    }
 
     fun remove(element: Any?): Boolean {
         val iof = items.indexOf(element)
@@ -135,23 +139,24 @@ class MutableDelegapter(
         tmp.commit()
     }
     @PublishedApi internal inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
-        override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean {
+        override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int) {
             items.add(atIndex, item)
             itemDelegates.add(atIndex, delegate)
-            return tryAddDelegate(delegate)
+            tryAddDelegate(delegate)
         }
-        override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean {
+        override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int) {
             items[atIndex] = item
             itemDelegates[atIndex] = delegate
-            return tryAddDelegate(delegate)
+            tryAddDelegate(delegate)
         }
-        override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int): Boolean =
-            if (items.isEmpty()) false else {
+        override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int) {
+            if (items.isNotEmpty()) {
                 this.items.addAll(atIndex, items)
                 (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })
                     .of(delegate, items.size) { itemDelegates.addAll(atIndex, it) }
                 tryAddDelegate(delegate)
             }
+        }
 
         fun commit() {
             this@MutableDelegapter.items = items
