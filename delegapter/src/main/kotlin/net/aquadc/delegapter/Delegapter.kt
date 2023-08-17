@@ -17,9 +17,9 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
 
     // common mutable interface
 
-    abstract fun <D : Any> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int = size): Boolean
-    abstract fun <D : Any> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean
-    abstract fun <D : Any> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int = size): Boolean
+    abstract fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int = size): Boolean
+    abstract fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Boolean
+    abstract fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int = size): Boolean
 
     // use like a List
 
@@ -125,7 +125,7 @@ inline fun <D> Delegapter.findIndexOfBy(
     return -1
 }
 
-inline fun <D : Any> Delegapter.findBy(
+inline fun <D> Delegapter.findBy(
     noinline delegate: Delegate<D>, item: (D) -> Boolean = { true },
     startIndex: Int = 0, direction: Int = 1,
 ): D? {

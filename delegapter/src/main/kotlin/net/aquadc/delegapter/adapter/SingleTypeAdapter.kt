@@ -46,7 +46,7 @@ open class SingleTypeAdapter<D>(
  * Adapter for a single diffable viewType.
  * @author Mike Gorünóv
  */
-open class SingleTypeDiffAdapter<D : Any>(
+open class SingleTypeDiffAdapter<D>(
     delegate: DiffDelegate<D>,
     items: List<D> = emptyList(),
     parent: MutableDelegapter? = null,
@@ -81,19 +81,28 @@ open class SingleTypeDiffAdapter<D : Any>(
 
 }
 
-private class Differ<T : Any>(private val itemCallback: DiffUtil.ItemCallback<T>) : DiffUtil.Callback() {
+private class Differ<T>(private val itemCallback: DiffUtil.ItemCallback<T>) : DiffUtil.Callback() {
     @JvmField var old: List<T>? = null
     @JvmField var new: List<T>? = null
     override fun getOldListSize(): Int = old!!.size
     override fun getNewListSize(): Int = new!!.size
-    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-        itemCallback.areItemsTheSame(old!![oldItemPosition], new!![newItemPosition])
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        val old = old!![oldItemPosition]
+        val new = new!![newItemPosition]
+        return if (old == null || new == null) old === new else itemCallback.areItemsTheSame(old, new)
+    }
 
-    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-        itemCallback.areContentsTheSame(old!![oldItemPosition], new!![newItemPosition])
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        val old = old!![oldItemPosition]
+        val new = new!![newItemPosition]
+        return if (old == null || new == null) old === new else itemCallback.areContentsTheSame(old, new)
+    }
 
-    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? =
-        itemCallback.getChangePayload(old!![oldItemPosition], new!![newItemPosition])
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+        val old = old!![oldItemPosition]
+        val new = new!![newItemPosition]
+        return if (old == null || new == null) null else itemCallback.getChangePayload(old, new)
+    }
 }
 
 
