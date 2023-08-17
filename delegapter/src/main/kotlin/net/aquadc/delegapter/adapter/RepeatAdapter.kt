@@ -29,7 +29,7 @@ open class RepeatAdapter<D>(
         }
 
     private val viewType =
-        parent?.viewTypeFor(delegate) ?: 0
+        parent?.forceViewTypeOf(delegate) ?: 0
 
     override fun getItemCount(): Int =
         size

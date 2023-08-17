@@ -173,7 +173,19 @@ class MutableDelegapter(
     fun bindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any> = emptyList()): Unit =
         @Suppress("UNCHECKED_CAST") (holder as VH<*, *, Any?>).bind(items[position], position, payloads)
 
-    internal fun viewTypeFor(delegate: Delegate<*>): Int {
+    /**
+     * Get `viewType` of the [delegate] in this Delegapter or its parent, or `-1`,
+     * if it was never ever added.
+     */
+    fun peekViewTypeOf(delegate: Delegate<*>): Int =
+        delegateTypes[delegate] ?: -1
+
+    /**
+     * Get `viewType` of the [delegate] in this Delegapter or its parent.
+     * Adds [delegate] if absent.
+     * Useful when configuring [androidx.recyclerview.widget.RecyclerView.RecycledViewPool].
+     */
+    fun forceViewTypeOf(delegate: Delegate<*>): Int {
         tryAddDelegate(delegate)
         return delegateTypes[delegate]!!
     }

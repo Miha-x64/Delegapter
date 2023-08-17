@@ -24,7 +24,7 @@ open class SingleTypeAdapter<D>(
     parent: MutableDelegapter? = null,
 ) : VHAdapter<VH<*, *, D>>() {
 
-    private val viewType = parent?.viewTypeFor(delegate) ?: 0
+    private val viewType = parent?.forceViewTypeOf(delegate) ?: 0
 
     open val items: RemoveRangeMutableList<D> = ObservableList(items, this)
 
