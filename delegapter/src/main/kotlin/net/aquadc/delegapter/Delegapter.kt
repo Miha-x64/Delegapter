@@ -98,7 +98,7 @@ inline fun Delegapter(
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 
 inline fun Delegapter.findIndexOf(
-    delegate: DelegatePredicate, item: (Any?) -> Boolean,
+    delegate: DelegatePredicate, item: (Any?) -> Boolean = { true },
     startIndex: Int = 0, direction: Int = 1,
 ): Int {
     require(direction != 0)
@@ -112,7 +112,7 @@ inline fun Delegapter.findIndexOf(
 }
 
 inline fun <D> Delegapter.findIndexOfBy(
-    noinline delegate: Delegate<D>, item: (D) -> Boolean,
+    noinline delegate: Delegate<D>, item: (D) -> Boolean = { true },
     startIndex: Int = 0, direction: Int = 1,
 ): Int {
     require(direction != 0)
@@ -125,5 +125,18 @@ inline fun <D> Delegapter.findIndexOfBy(
     return -1
 }
 
+inline fun <D : Any> Delegapter.findBy(
+    noinline delegate: Delegate<D>, item: (D) -> Boolean = { true },
+    startIndex: Int = 0, direction: Int = 1,
+): D? {
+    val i = findIndexOfBy(delegate, item, startIndex, direction)
+    return if (i < 0) null else itemAt(i) as D
+}
+
 inline val Delegapter.lastIndex: Int
     get() = size - 1
+
+fun Delegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Boolean = add(delegate, Unit, atIndex)
+fun Delegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Boolean = set(delegate, Unit, atIndex)
+fun MutableDelegapter.add(delegate: Delegate<in Unit>, atIndex: Int = size): Boolean = add(delegate, Unit, atIndex)
+fun MutableDelegapter.set(delegate: Delegate<in Unit>, atIndex: Int): Boolean = set(delegate, Unit, atIndex)
