@@ -141,10 +141,12 @@ class MutableDelegapter(
     }
 
     fun clear() {
-        val size = items.size
-        items.clear()
-        itemDelegates.clear()
-        target.onRemoved(0, size)
+        if (!isEmpty) {
+            val size = items.size
+            items.clear()
+            itemDelegates.clear()
+            target.onRemoved(0, size)
+        }
     }
 
     // adapter-specific things
