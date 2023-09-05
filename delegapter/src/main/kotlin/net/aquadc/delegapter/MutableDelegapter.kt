@@ -70,6 +70,29 @@ class MutableDelegapter(
         }
     }
 
+    // e.g. you've computed a chunk on a background thread and want to add its contents
+    fun addAll(from: Delegapter, fromIndex: Int = 0, toIndex: Int = from.size, atIndex: Int = size) {
+        require(fromIndex >= 0 && toIndex <= from.size)
+        if (fromIndex == toIndex) return
+
+        var items: List<Any?> = from.items
+        var itemDelegates: List<Delegate<*>> = from.itemDelegates
+        if (fromIndex != 0 || toIndex != from.size) {
+            items = items.subList(fromIndex, toIndex)
+            itemDelegates = itemDelegates.subList(fromIndex, toIndex)
+        }
+
+        // before we tryAddDelegates(), implicitly range-check `atIndex` by List internals
+        this.items.addAll(atIndex, items)
+        this.itemDelegates.addAll(atIndex, itemDelegates)
+        // now we're safe
+        for (i in itemDelegates.indices) {
+            tryAddDelegate(itemDelegates[i])
+        }
+
+        target.onInserted(atIndex, items.size)
+    }
+
     private fun tryAddDelegate(delegate: Delegate<*>) {
         if (!delegateTypes.containsKey(delegate)) {
             delegateTypes[delegate] = delegateTypes.size;

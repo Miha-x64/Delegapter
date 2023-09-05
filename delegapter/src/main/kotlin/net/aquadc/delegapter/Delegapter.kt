@@ -81,6 +81,12 @@ abstract class Delegapter protected constructor(initialCapacity: Int) {
         append(']')
     }
 
+    // hacks
+
+    // fuck Kotlin access rules!
+    protected val Delegapter.items: RemoveRangeArrayList<Any?> get() = this.items
+    protected val Delegapter.itemDelegates: RemoveRangeArrayList<Delegate<*>> get() = this.itemDelegates
+
 }
 
 @Suppress("NOTHING_TO_INLINE") @JvmName("create") @JvmOverloads
