@@ -36,7 +36,11 @@ class MutableDelegapter(
     private val viewTypeMap: WeakHashMap<Delegate<*>, Int>
 
     private var repeat: RepeatList<Delegate<*>>? = null
+        get() = field ?: parent?.repeat
+        set(value) { field = value; if (parent != null) parent.repeat = value }
     private var differ: Differ? = null
+        get() = field ?: parent?.differ
+        set(value) { field = value; if (parent != null) parent.differ = differ }
 
     init {
         if (parent == null) {
@@ -51,8 +55,6 @@ class MutableDelegapter(
         } else {
             viewTypeList = parent.viewTypeList
             viewTypeMap = parent.viewTypeMap
-            repeat = parent.repeat
-            differ = parent.differ
         }
     }
 
