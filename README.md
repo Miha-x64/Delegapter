@@ -10,7 +10,7 @@ repositories {
 ...
 
 dependencies {
-    implementation("com.github.Miha-x64:Delegapter:0.96")
+    implementation("com.github.Miha-x64:Delegapter:0.97")
 }
 
 ```
@@ -31,7 +31,7 @@ We use our own ViewHolder class (called just `VH`) for a bunch of reasons:
 * There's `RecyclerView.ViewHolder.itemView: View`, but `VH` is generic, and has a property `VH<V, …>.view: V`
 * When using viewBinding, all `ViewHolder`s look the same: they have `binding` field. `VH` supports an attachment of any type which is typically `ViewBinding`: `VH<*, B, …>.binding: B`
 * Delegapter needs to tie certain `ViewHolder` type with the corresponding data type for type safety: `VH<V : View, B, D>`
-* Therefore, `VH<*, *, D>` has its own `bind(D)` method which is a common practice (but not forced by the library)
+* Therefore, `VH<*, *, D>` has its own `bind(D)` method which is a common practice
 
 There's a lot of factory functions for creating ViewHolders:
 ```kotlin
@@ -97,12 +97,10 @@ You may want to use `Delegapter` with a custom adapter in some advanced usage sc
   (this requires a corrected `ListUpdateCallback`, too)
 * Use several Delegapters in a single Adapter (IDK why but this should happen at some point)
 
-In order to share `RecycledViewPool` between several `RecyclerView`s, you need to preserve the same `viewType` to `Delegate` mapping across adapters. This can be achieved using a shared “parent” `Delegapter`:
+In order to share `RecycledViewPool` between several `RecyclerView`s, you need to use `MutableDelegapter.recycledViewPool` and preserve the same `viewType` to `Delegate` mapping across adapters. The latter can be achieved using a shared “parent” `Delegapter`:
 
 ```kotlin
 val delegapterFather = Delegapter(NullListUpdateCallback)
-
-…
 
 class SomeAdapter : RecyclerView.Adapter<…>() { // for custom adapter
     private val d = Delegapter(this, delegapterFather)
