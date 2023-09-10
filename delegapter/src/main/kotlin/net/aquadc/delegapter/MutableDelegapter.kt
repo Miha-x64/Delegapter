@@ -10,15 +10,27 @@ import java.lang.ref.WeakReference
 /**
  * Mutable data structure for holding (delegate, item) pairs with agreed types.
  * @author Mike Gorünóv
+ *
+ * @param target changes listener, typically adapter
+ * @param parent delegapter father to share viewTypes with
+ * @param initialDelegateCapacity how many delegates expected to manage. Ignored if [parent] is specified
+ * @param initialItemCapacity how many items expected to manage
  */
 class MutableDelegapter(
     private val target: ListUpdateCallback,
     private val parent: MutableDelegapter? = null,
-    initialCapacity: Int = -1,
-) : Delegapter(initialCapacity) {
+    initialDelegateCapacity: Int = -1,
+    initialItemCapacity: Int = -1,
+) : Delegapter(initialItemCapacity) {
 
-    constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1) :
-        this(AdapterListUpdateCallback(target), parent, initialCapacity)
+    constructor(
+        target: RecyclerView.Adapter<*>,
+        parent: MutableDelegapter? = null,
+        initialDelegateCapacity: Int = -1,
+        initialCapacity: Int = -1,
+    ) : this(
+        AdapterListUpdateCallback(target), parent, initialDelegateCapacity, initialCapacity,
+    )
 
     private val viewTypeList: RemoveRangeArrayList<WeakReference<Delegate<*>>?>
     private val viewTypeMap: WeakHashMap<Delegate<*>, Int>
@@ -28,8 +40,10 @@ class MutableDelegapter(
 
     init {
         if (parent == null) {
-            viewTypeList = RemoveRangeArrayList.create(initialCapacity)
-            viewTypeMap = object : WeakHashMap<Delegate<*>, Int>() {
+            viewTypeList = RemoveRangeArrayList.create(initialDelegateCapacity)
+            viewTypeMap = object : WeakHashMap<Delegate<*>, Int>(
+                if (initialDelegateCapacity < 0) 16 else initialDelegateCapacity,
+            ) {
                 override fun staleEntryExpunged(value: Int) {
                     _viewPool?.setMaxRecycledViews(value, 0)
                 }
@@ -160,8 +174,8 @@ class MutableDelegapter(
 
     // adapter-specific things
 
-    inline fun replace(detectMoves: Boolean = true, initialCapacity: Int = -1, block: Delegapter.() -> Unit) {
-        commit(detectMoves, DiffDelegapter(initialCapacity).apply(block))
+    inline fun replace(detectMoves: Boolean = true, initialItemCapacity: Int = -1, block: Delegapter.() -> Unit) {
+        commit(detectMoves, DiffDelegapter(initialItemCapacity).apply(block))
     }
     @PublishedApi internal fun commit(detectMoves: Boolean, tmp: DiffDelegapter) {
         val differ = differ ?: Differ().also { differ = it }
@@ -172,7 +186,8 @@ class MutableDelegapter(
         differ.new = null
         tmp.commit()
     }
-    @PublishedApi internal inner class DiffDelegapter @PublishedApi internal constructor(initialCapacity: Int) : Delegapter(initialCapacity) {
+    @PublishedApi internal inner class DiffDelegapter
+    @PublishedApi internal constructor(initialItemCapacity: Int) : Delegapter(initialItemCapacity) {
         override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int) {
             items.add(atIndex, item)
             itemDelegates.add(atIndex, delegate)

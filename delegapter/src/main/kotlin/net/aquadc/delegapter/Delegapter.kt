@@ -10,10 +10,10 @@ import net.aquadc.delegapter.decor.DelegatePredicate
  * Data structure for holding (delegate, item) pairs with agreed types.
  * @author Mike Gorünóv
  */
-abstract class Delegapter protected constructor(initialCapacity: Int) {
+abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
-    @JvmField protected var itemDelegates: RemoveRangeArrayList<Delegate<*>> = RemoveRangeArrayList.create(initialCapacity)
-    @JvmField protected var items: RemoveRangeArrayList<Any?> = RemoveRangeArrayList.create(initialCapacity)
+    @JvmField protected var itemDelegates: RemoveRangeArrayList<Delegate<*>> = RemoveRangeArrayList.create(initialItemCapacity)
+    @JvmField protected var items: RemoveRangeArrayList<Any?> = RemoveRangeArrayList.create(initialItemCapacity)
 
     // common mutable interface
 
