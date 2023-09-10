@@ -5,7 +5,7 @@ import androidx.recyclerview.widget.AdapterListUpdateCallback
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.collections.set
+import java.lang.ref.WeakReference
 
 /**
  * Mutable data structure for holding (delegate, item) pairs with agreed types.
@@ -13,30 +13,38 @@ import kotlin.collections.set
  */
 class MutableDelegapter(
     private val target: ListUpdateCallback,
-    parent: MutableDelegapter? = null,
+    private val parent: MutableDelegapter? = null,
     initialCapacity: Int = -1,
 ) : Delegapter(initialCapacity) {
 
     constructor(target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1) :
         this(AdapterListUpdateCallback(target), parent, initialCapacity)
 
-    private val delegateList: RemoveRangeArrayList<Delegate<*>>
-    private val delegateTypes: HashMap<Delegate<*>, Int>
+    private val viewTypeList: RemoveRangeArrayList<WeakReference<Delegate<*>>?>
+    private val viewTypeMap: WeakHashMap<Delegate<*>, Int>
 
     private var repeat: RepeatList<Delegate<*>>? = null
     private var differ: Differ? = null
 
     init {
         if (parent == null) {
-            delegateList = RemoveRangeArrayList.create(initialCapacity)
-            delegateTypes = if (initialCapacity < 0) HashMap() else HashMap(initialCapacity)
+            viewTypeList = RemoveRangeArrayList.create(initialCapacity)
+            viewTypeMap = object : WeakHashMap<Delegate<*>, Int>() {
+                override fun staleEntryExpunged(value: Int) {
+                    _viewPool?.setMaxRecycledViews(value, 0)
+                }
+            }
         } else {
-            delegateList = parent.delegateList
-            delegateTypes = parent.delegateTypes
+            viewTypeList = parent.viewTypeList
+            viewTypeMap = parent.viewTypeMap
             repeat = parent.repeat
             differ = parent.differ
         }
     }
+
+    private var _viewPool: RecyclerView.RecycledViewPool? = null
+    val recycledViewPool: RecyclerView.RecycledViewPool
+        get() = parent?.recycledViewPool ?: (_viewPool ?: RecyclerView.RecycledViewPool().also { _viewPool = it })
 
     // configure like a MutableList
 
@@ -94,9 +102,10 @@ class MutableDelegapter(
     }
 
     private fun tryAddDelegate(delegate: Delegate<*>) {
-        if (!delegateTypes.containsKey(delegate)) {
-            delegateTypes[delegate] = delegateTypes.size;
-            delegateList.add(delegate)
+        if (!viewTypeMap.containsKey(delegate)) {
+            viewTypeList.add(
+                viewTypeMap.putAndGetKeyRef(delegate, viewTypeList.size)
+            )
         }
     }
 
@@ -190,14 +199,14 @@ class MutableDelegapter(
     }
 
     fun viewTypeAt(position: Int): Int =
-        delegateTypes[itemDelegates[position]]!!
+        viewTypeMap[itemDelegates[position]]!!
 
     @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("this.forViewType(viewType)(parent)"))
     fun createViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-        delegateList[viewType](parent)
+        viewTypeList[viewType]!!.get()!!(parent)
 
     fun forViewType(viewType: Int): Delegate<*> =
-        delegateList[viewType]
+        viewTypeList[viewType]!!.get()!!
 
     @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("(holder as VH<*, *, Any?>).bind(this.itemAt(position), position, payloads)"))
     fun bindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any> = emptyList()): Unit =
@@ -208,7 +217,7 @@ class MutableDelegapter(
      * if it was never ever added.
      */
     fun peekViewTypeOf(delegate: Delegate<*>): Int =
-        delegateTypes[delegate] ?: -1
+        viewTypeMap[delegate] ?: -1
 
     /**
      * Get `viewType` of the [delegate] in this Delegapter or its parent.
@@ -217,7 +226,7 @@ class MutableDelegapter(
      */
     fun forceViewTypeOf(delegate: Delegate<*>): Int {
         tryAddDelegate(delegate)
-        return delegateTypes[delegate]!!
+        return viewTypeMap[delegate]!!
     }
 
 }

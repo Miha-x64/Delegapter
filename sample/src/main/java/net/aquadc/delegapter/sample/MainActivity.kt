@@ -72,6 +72,10 @@ class MainActivity : Activity() {
                     spanSizeLookup = adapter.data.spanSizeLookup { _, _, delegate ->
                         if (delegate == titleDelegate) spanCount else 1
                     }
+
+                    // Typically detach means exiting the screen.
+                    // Reuse viewHolders, if shared.
+                    recycleChildrenOnDetach = true
                 }
                 addItemDecoration(adapter.data.decor(orientation, debugSpaces = true) {
                     around({ it === titleDelegate }, size = 24) // 24dp before and after each title
