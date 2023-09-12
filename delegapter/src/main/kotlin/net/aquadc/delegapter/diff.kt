@@ -1,5 +1,6 @@
 package net.aquadc.delegapter
 
+import android.annotation.SuppressLint
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 
@@ -11,7 +12,7 @@ abstract class DiffDelegate<D> : DiffUtil.ItemCallback<D>(), (ViewGroup) -> VH<*
 /**
  * Creates a [DiffDelegate] from [this] one using [itemDiffer].
  */
-operator fun <D> ((ViewGroup) -> VH<*, *, D>).plus(itemDiffer: DiffUtil.ItemCallback<D>): DiffDelegate<D> =
+operator fun <D> ((ViewGroup) -> VH<*, *, D>).plus(itemDiffer: DiffUtil.ItemCallback<in D>): DiffDelegate<D> =
     object : DelegatedDiffDelegate<D>(this) {
         override fun areItemsTheSame(oldItem: D & Any, newItem: D & Any): Boolean =
             itemDiffer.areItemsTheSame(oldItem, newItem)
@@ -39,6 +40,18 @@ inline fun <D> ((ViewGroup) -> VH<*, *, D>).diff(
 }
 
 /**
+ * Creates a [DiffDelegate] from [this] one using equality check.
+ * Short-circuit overload avoiding extra class.
+ */
+fun <D> ((ViewGroup) -> VH<*, *, D>).diff(): DiffDelegate<D> = this + EqualityDiff
+
+private object EqualityDiff : DiffUtil.ItemCallback<Any?>() {
+    override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean = true
+    @SuppressLint("DiffUtilEquals")
+    override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean = oldItem == newItem
+}
+
+/**
  * Avoids overriding existing diffing machinery of [this] delegate.
  */
 @Suppress("DeprecatedCallableAddReplaceWith", "UnusedReceiverParameter")
@@ -52,9 +65,16 @@ inline fun <D> DiffDelegate<D>.diff(
 /**
  * Avoids overriding existing diffing machinery of [this] delegate.
  */
+@Suppress("DeprecatedCallableAddReplaceWith", "UnusedReceiverParameter")
+@Deprecated("Why you wanna do this?!", level = DeprecationLevel.ERROR)
+fun <D> DiffDelegate<D>.diff(): DiffDelegate<D> = throw AssertionError()
+
+/**
+ * Avoids overriding existing diffing machinery of [this] delegate.
+ */
 @Suppress("DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER")
 @Deprecated("Why you wanna do this?!", level = DeprecationLevel.ERROR)
-operator fun <D> DiffDelegate<D>.plus(cb: DiffUtil.ItemCallback<D>): DiffDelegate<D> =
+operator fun <D> DiffDelegate<D>.plus(cb: DiffUtil.ItemCallback<in D>): DiffDelegate<D> =
     throw AssertionError()
 
 /**
