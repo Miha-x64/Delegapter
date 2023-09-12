@@ -146,3 +146,25 @@ fun Delegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Unit =
 fun Delegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
 fun MutableDelegapter.add(delegate: Delegate<in Unit>, atIndex: Int = size): Unit = add(delegate, Unit, atIndex)
 fun MutableDelegapter.set(delegate: Delegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
+
+inline fun Delegapter.forEachIndexed(block: (index: Int, delegate: Delegate<*>, item: Any?) -> Unit) {
+    repeat(size) {
+        block(it, delegateAt(it), itemAt(it))
+    }
+}
+inline fun <D> Delegapter.forEachIndexed(noinline delegate: Delegate<D>, block: (index: Int, item: D) -> Unit) {
+    forEachIndexed { index, curDelegate, item ->
+        if (curDelegate === delegate)
+            block(index, item as D)
+    }
+}
+inline fun Delegapter.forEach(block: (delegate: Delegate<*>, item: Any?) -> Unit) {
+    forEachIndexed { _, delegate, item ->
+        block(delegate, item)
+    }
+}
+inline fun <D> Delegapter.forEach(noinline delegate: Delegate<D>, block: (item: D) -> Unit) {
+    forEachIndexed(delegate) { _, item ->
+        block(item)
+    }
+}
