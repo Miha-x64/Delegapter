@@ -36,6 +36,7 @@ import java.util.*;
  * - added {@link #staleEntryExpunged} callback
  * - added {@link #putAndGetKeyRef} method
  * - removed everything I don't need
+ * - use identity equality
  *
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
@@ -47,7 +48,7 @@ import java.util.*;
  * @see         java.util.WeakHashMap
  */
 // Mike-REMOVED public
-class WeakHashMap<K,V>
+class WeakIdentityHashMap<K,V> // Mike-CHANGED renamed
     extends AbstractMap<K,V>
     implements Map<K,V> {
 
@@ -109,7 +110,7 @@ class WeakHashMap<K,V>
      * @throws IllegalArgumentException if the initial capacity is negative,
      *         or if the load factor is nonpositive.
      */
-    public WeakHashMap(int initialCapacity, float loadFactor) {
+    public WeakIdentityHashMap(int initialCapacity, float loadFactor) { // Mike-CHANGED renamed
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal Initial Capacity: "+
                                                initialCapacity);
@@ -134,7 +135,7 @@ class WeakHashMap<K,V>
      * @param  initialCapacity The initial capacity of the <tt>WeakHashMap</tt>
      * @throws IllegalArgumentException if the initial capacity is negative
      */
-    public WeakHashMap(int initialCapacity) {
+    public WeakIdentityHashMap(int initialCapacity) { // Mike-CHANGED renamed
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
     }
 
@@ -142,7 +143,7 @@ class WeakHashMap<K,V>
      * Constructs a new, empty <tt>WeakHashMap</tt> with the default initial
      * capacity (16) and load factor (0.75).
      */
-    public WeakHashMap() {
+    public WeakIdentityHashMap() { // Mike-CHANGED renamed
         this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
     }
 
@@ -156,7 +157,7 @@ class WeakHashMap<K,V>
      * @throws  NullPointerException if the specified map is null
      * @since   1.3
      */
-    public WeakHashMap(Map<? extends K, ? extends V> m) {
+    public WeakIdentityHashMap(Map<? extends K, ? extends V> m) { // Mike-CHANGED renamed
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                 DEFAULT_INITIAL_CAPACITY),
              DEFAULT_LOAD_FACTOR);
@@ -169,13 +170,7 @@ class WeakHashMap<K,V>
     // Mike-REMOVED private static Object maskNull(Object key)
     // Mike-REMOVED static Object unmaskNull(Object key)
 
-    /**
-     * Checks for equality of non-null reference x and possibly-null y.  By
-     * default uses Object.equals.
-     */
-    private static boolean eq(Object x, Object y) {
-        return x == y || x.equals(y);
-    }
+    // Mike-REMOVED private static boolean eq(Object x, Object y)
 
     /**
      * Retrieve object hash code and applies a supplemental hash function to the
@@ -283,7 +278,7 @@ class WeakHashMap<K,V>
         int index = indexFor(h, tab.length);
         Entry<K,V> e = tab[index];
         while (e != null) {
-            if (e.hash == h && eq(k, e.get()))
+            if (e.hash == h && k == e.get()) // Mike-CHANGED use identity equality
                 return e.value;
             e = e.next;
         }
@@ -312,7 +307,7 @@ class WeakHashMap<K,V>
         Entry<K,V>[] tab = getTable();
         int index = indexFor(h, tab.length);
         Entry<K,V> e = tab[index];
-        while (e != null && !(e.hash == h && eq(k, e.get())))
+        while (e != null && !(e.hash == h && k == e.get())) // Mike-CHANGED use identity equality
             e = e.next;
         return e;
     }
@@ -325,7 +320,7 @@ class WeakHashMap<K,V>
         int i = indexFor(h, tab.length);
 
         for (Entry<K,V> e = tab[i]; e != null; e = e.next) {
-            if (h == e.hash && eq(k, e.get())) {
+            if (h == e.hash && k == e.get()) { // Mike-CHANGED use identity equality
                 V oldValue = e.value;
                 if (value != oldValue)
                     e.value = value;
@@ -348,7 +343,7 @@ class WeakHashMap<K,V>
         int i = indexFor(h, tab.length);
 
         for (Entry<K,V> e = tab[i]; e != null; e = e.next) {
-            if (h == e.hash && eq(k, e.get())) {
+            if (h == e.hash && k == e.get()) {
                 V oldValue = e.value;
                 if (value != oldValue)
                     e.value = value;
@@ -438,7 +433,7 @@ class WeakHashMap<K,V>
 
         while (e != null) {
             Entry<K,V> next = e.next;
-            if (h == e.hash && eq(k, e.get())) {
+            if (h == e.hash && k == e.get()) { // Mike-CHANGED use identity equality
                 // Mike-REMOVED modCount++;
                 size--;
                 if (prev == e)

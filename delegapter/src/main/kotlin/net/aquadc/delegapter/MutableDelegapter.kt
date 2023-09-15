@@ -33,7 +33,7 @@ class MutableDelegapter(
     )
 
     private val viewTypeList: RemoveRangeArrayList<WeakReference<Delegate<*>>?>
-    private val viewTypeMap: WeakHashMap<Delegate<*>, Int>
+    private val viewTypeMap: WeakIdentityHashMap<Delegate<*>, Int>
 
     private var repeat: RepeatList<Delegate<*>>? = null
         get() = field ?: parent?.repeat
@@ -45,7 +45,7 @@ class MutableDelegapter(
     init {
         if (parent == null) {
             viewTypeList = RemoveRangeArrayList.create(initialDelegateCapacity)
-            viewTypeMap = object : WeakHashMap<Delegate<*>, Int>(
+            viewTypeMap = object : WeakIdentityHashMap<Delegate<*>, Int>(
                 if (initialDelegateCapacity < 0) 16 else initialDelegateCapacity,
             ) {
                 override fun staleEntryExpunged(value: Int) {
