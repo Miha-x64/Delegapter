@@ -10,17 +10,18 @@ repositories {
 ...
 
 dependencies {
-    implementation("com.github.Miha-x64:Delegapter:0.97")
+    implementation("com.github.Miha-x64:Delegapter:0.98")
 }
 
 ```
 
-### Why?
+### Why not [sockeqwe/AdapterDelegates](https://github.com/sockeqwe/AdapterDelegates/)?
 
 The idea of registering a delegate for a certain item type is flawed:
-* one could forget to register a delegate (runtime crash),
-* or to unregister a useless one (dead code);
-* having items of the same type with different `viewTypes` and `ViewHolder`s is impossible.
+* one could forget to register a delegate (runtime crash)
+* or to unregister a useless one (dead code)
+* having items of the same type with different `viewTypes` and `ViewHolder`s is impossible
+* having items of different generic types with the same raw type is impossible
 
 The concept of this library is to make everything clear and explicit. No binding a delegate to certain item type, no fallback delegates.
 
