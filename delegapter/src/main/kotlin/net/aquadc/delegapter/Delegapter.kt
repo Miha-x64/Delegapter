@@ -146,6 +146,9 @@ fun Delegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Unit =
 fun Delegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
 fun MutableDelegapter.add(delegate: Delegate<in Unit>, atIndex: Int = size): Unit = add(delegate, Unit, atIndex)
 fun MutableDelegapter.set(delegate: Delegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
+// workarounds to fix overload resolution ambiguity:
+fun MutableDelegapter.add(delegate: DiffDelegate<in Unit>, atIndex: Int = size): Unit = add(delegate, Unit, atIndex)
+fun MutableDelegapter.set(delegate: DiffDelegate<in Unit>, atIndex: Int): Unit = set(delegate, Unit, atIndex)
 
 inline fun Delegapter.forEachIndexed(block: (index: Int, delegate: Delegate<*>, item: Any?) -> Unit) {
     repeat(size) {
