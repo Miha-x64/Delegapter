@@ -73,7 +73,7 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
     // debug
 
-    override fun toString(): String = buildString {
+    override fun toString(): String = if (isEmpty) "[]" else buildString {
         append(super.toString()).append('(').append(items.size).append("): ").append('[').append('\n')
         for (i in items.indices) {
             append('#').append(i).append(' ').appendFun(itemDelegates[i]).append(": ").append(items[i]).append('\n')
