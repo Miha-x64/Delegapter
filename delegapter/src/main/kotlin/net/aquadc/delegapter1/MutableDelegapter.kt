@@ -1,11 +1,14 @@
-package net.aquadc.delegapter
+package net.aquadc.delegapter1
 
-import android.view.ViewGroup
 import androidx.recyclerview.widget.AdapterListUpdateCallback
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
+import net.aquadc.delegapter.RemoveRangeArrayList
+import net.aquadc.delegapter.RepeatList
+import net.aquadc.delegapter.commitRemovals
 import net.aquadc.delegapter.internal.WeakIdentityHashMap
+import net.aquadc.delegapter.markForRemoval
 import java.lang.ref.WeakReference
 
 /**
@@ -17,7 +20,6 @@ import java.lang.ref.WeakReference
  * @param initialDelegateCapacity how many delegates expected to manage. Ignored if [parent] is specified
  * @param initialItemCapacity how many items expected to manage
  */
-@Deprecated("moved", ReplaceWith("MutableDelegapter", "net.aquadc.delegapter1.MutableDelegapter"))
 class MutableDelegapter(
     private val target: ListUpdateCallback,
     private val parent: MutableDelegapter? = null,
@@ -34,24 +36,27 @@ class MutableDelegapter(
         AdapterListUpdateCallback(target), parent, initialDelegateCapacity, initialCapacity,
     )
 
-    private val viewTypeList: RemoveRangeArrayList<WeakReference<Delegate<*>>?>
-    private val viewTypeMap: WeakIdentityHashMap<Delegate<*>, Int>
+    private val viewTypeList: RemoveRangeArrayList<WeakReference<ViewHolderFactory>?>
+    private val viewTypeMap: WeakIdentityHashMap<ViewHolderFactory, Int>
 
-    private var repeat: RepeatList<Delegate<*>>? = null
+    private var repeat: RepeatList<AdapterDelegate<*, *>>? = null
         get() = field ?: parent?.repeat
         set(value) { field = value; if (parent != null) parent.repeat = value }
     private var differ: Differ? = null
         get() = field ?: parent?.differ
         set(value) { field = value; if (parent != null) parent.differ = differ }
 
+    val recycledViewPool: RecyclerView.RecycledViewPool =
+        parent?.recycledViewPool ?: RecyclerView.RecycledViewPool()
+
     init {
         if (parent == null) {
             viewTypeList = RemoveRangeArrayList.create(initialDelegateCapacity)
-            viewTypeMap = object : WeakIdentityHashMap<Delegate<*>, Int>(
+            viewTypeMap = object : WeakIdentityHashMap<ViewHolderFactory, Int>(
                 if (initialDelegateCapacity < 0) 16 else initialDelegateCapacity,
             ) {
                 override fun staleEntryExpunged(value: Int) {
-                    _viewPool?.setMaxRecycledViews(value, 0)
+                    recycledViewPool.setMaxRecycledViews(value, 0)
                 }
             }
         } else {
@@ -60,36 +65,35 @@ class MutableDelegapter(
         }
     }
 
-    private var _viewPool: RecyclerView.RecycledViewPool? = null
-    val recycledViewPool: RecyclerView.RecycledViewPool
-        get() = parent?.recycledViewPool ?: (_viewPool ?: RecyclerView.RecycledViewPool().also { _viewPool = it })
-
     // configure like a MutableList
 
-    override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Unit =
-        add(delegate as Delegate<in D>, item, atIndex)
-    @JvmOverloads fun <D> add(delegate: Delegate<in D>, item: D, atIndex: Int = size) {
+    override fun <D> add(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int): Unit =
+        add(delegate as AdapterDelegate<D, *>, item, atIndex)
+    @JvmName("addItem")
+    @JvmOverloads fun <D> add(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int = size) {
         items.add(atIndex, item)
         itemDelegates.add(atIndex, delegate)
         target.onInserted(atIndex, 1)
         tryAddDelegate(delegate)
     }
 
-    override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int): Unit =
-        set(delegate as Delegate<in D>, item, atIndex)
-    @JvmOverloads fun <D> set(delegate: Delegate<in D>, item: D, atIndex: Int, payload: Any? = null) {
+    override fun <D> set(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int): Unit =
+        set(delegate as AdapterDelegate<D, *>, item, atIndex)
+    @JvmName("setItem")
+    @JvmOverloads fun <D> set(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int, payload: Any? = null) {
         items[atIndex] = item
         itemDelegates[atIndex] = delegate
         target.onChanged(atIndex, 1, payload)
         tryAddDelegate(delegate)
     }
 
-    override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int): Unit =
-        addAll(delegate as Delegate<in D>, items, atIndex)
-    @JvmOverloads fun <D> addAll(delegate: Delegate<in D>, items: Collection<D>, atIndex: Int = size) {
+    override fun <D> addAll(delegate: AdapterDelegate<D, Diff<D>>, items: Collection<D>, atIndex: Int): Unit =
+        addAll(delegate as AdapterDelegate<D, *>, items, atIndex)
+    @JvmName("addItems")
+    @JvmOverloads fun <D> addAll(delegate: AdapterDelegate<D, *>, items: Collection<D>, atIndex: Int = size) {
         if (items.isNotEmpty()) {
             this.items.addAll(atIndex, items)
-            (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })
+            (repeat ?: RepeatList<AdapterDelegate<*, *>>().also { repeat = it })
                 .of(delegate, items.size) { itemDelegates.addAll(atIndex, it) }
             target.onInserted(atIndex, items.size)
             tryAddDelegate(delegate)
@@ -102,7 +106,7 @@ class MutableDelegapter(
         if (fromIndex == toIndex) return
 
         var items: List<Any?> = from.items
-        var itemDelegates: List<Delegate<*>> = from.itemDelegates
+        var itemDelegates: List<AdapterDelegate<*, *>> = from.itemDelegates
         if (fromIndex != 0 || toIndex != from.size) {
             items = items.subList(fromIndex, toIndex)
             itemDelegates = itemDelegates.subList(fromIndex, toIndex)
@@ -119,13 +123,19 @@ class MutableDelegapter(
         target.onInserted(atIndex, items.size)
     }
 
-    private fun tryAddDelegate(delegate: Delegate<*>) {
-        if (!viewTypeMap.containsKey(delegate)) {
-            viewTypeList.add(
-                viewTypeMap.putAndGetKeyRef(delegate, viewTypeList.size)
-            )
+    private fun tryAddDelegate(delegate: AdapterDelegate<*, *>) {
+        val vhf = delegate.create
+        val actual = vhf.actual
+        if (!viewTypeMap.containsKey(actual)) {
+            val viewType = viewTypeList.size
+            viewTypeList.add(viewTypeMap.putAndGetKeyRef(actual, viewType))
+            if (vhf is VHFMaxScrap) {
+                recycledViewPool.setMaxRecycledViews(viewType, vhf.maxRecycledViews)
+            }
         }
     }
+    private val ViewHolderFactory.actual
+        get() = if (this is VHFMaxScrap) this.factory else this
 
     fun remove(element: Any?): Boolean {
         val iof = items.indexOf(element)
@@ -145,13 +155,13 @@ class MutableDelegapter(
     fun retainAll(elements: Collection<Any?>): Boolean = batchRemove(elements, true)
     private fun batchRemove(elements: Collection<Any?>, complement: Boolean): Boolean =
         batchRemoveIf { elements.contains(items[it]) != complement }
-    @JvmName("removeAllBy") fun removeAll(delegate: Delegate<*>): Boolean = batchRemoveBy(delegate, false)
-    @JvmName("retainAllBy") fun retainAll(delegate: Delegate<*>): Boolean = batchRemoveBy(delegate, true)
-    private fun batchRemoveBy(delegate: Delegate<*>, complement: Boolean): Boolean =
+    @JvmName("removeAllBy") fun removeAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, false)
+    @JvmName("retainAllBy") fun retainAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, true)
+    private fun batchRemoveBy(delegate: AdapterDelegate<*, *>, complement: Boolean): Boolean =
         batchRemoveIf { (itemDelegates[it] == delegate) != complement }
-    @JvmName("removeAllBy") fun removeAll(delegates: Collection<Delegate<*>>): Boolean = batchRemoveBy(delegates, false)
-    @JvmName("retainAllBy") fun retainAll(delegates: Collection<Delegate<*>>): Boolean = batchRemoveBy(delegates, true)
-    private fun batchRemoveBy(delegates: Collection<Delegate<*>>, complement: Boolean): Boolean =
+    @JvmName("removeAllBy") fun removeAll(delegates: Collection<AdapterDelegate<*, *>>): Boolean = batchRemoveBy(delegates, false)
+    @JvmName("retainAllBy") fun retainAll(delegates: Collection<AdapterDelegate<*, *>>): Boolean = batchRemoveBy(delegates, true)
+    private fun batchRemoveBy(delegates: Collection<AdapterDelegate<*, *>>, complement: Boolean): Boolean =
         batchRemoveIf { delegates.contains(itemDelegates[it]) != complement }
     private inline fun batchRemoveIf(predicate: (Int) -> Boolean): Boolean {
         var removed = 0
@@ -178,8 +188,8 @@ class MutableDelegapter(
 
     // adapter-specific things
 
-    inline fun replace(detectMoves: Boolean = true, initialItemCapacity: Int = -1, block: Delegapter.() -> Unit) {
-        commit(detectMoves, DiffDelegapter(initialItemCapacity).apply(block))
+    inline fun replace(detectMoves: Boolean = true, initialItemCapacity: Int = -1, block: Delegapter.() -> Unit) { // TODO executor for Diff
+        commit(detectMoves, DiffDelegapter(initialItemCapacity).apply(block)) // TODO @AnyThread
     }
     @PublishedApi internal fun commit(detectMoves: Boolean, tmp: DiffDelegapter) {
         val differ = differ ?: Differ().also { differ = it }
@@ -192,20 +202,20 @@ class MutableDelegapter(
     }
     @PublishedApi internal inner class DiffDelegapter
     @PublishedApi internal constructor(initialItemCapacity: Int) : Delegapter(initialItemCapacity) {
-        override fun <D> add(delegate: DiffDelegate<in D>, item: D, atIndex: Int) {
+        override fun <D> add(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int) {
             items.add(atIndex, item)
             itemDelegates.add(atIndex, delegate)
             tryAddDelegate(delegate)
         }
-        override fun <D> set(delegate: DiffDelegate<in D>, item: D, atIndex: Int) {
+        override fun <D> set(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int) {
             items[atIndex] = item
             itemDelegates[atIndex] = delegate
             tryAddDelegate(delegate)
         }
-        override fun <D> addAll(delegate: DiffDelegate<in D>, items: Collection<D>, atIndex: Int) {
+        override fun <D> addAll(delegate: AdapterDelegate<D, Diff<D>>, items: Collection<D>, atIndex: Int) {
             if (items.isNotEmpty()) {
                 this.items.addAll(atIndex, items)
-                (repeat ?: RepeatList<Delegate<*>>().also { repeat = it })
+                (repeat ?: RepeatList<AdapterDelegate<*, *>>().also { repeat = it })
                     .of(delegate, items.size) { itemDelegates.addAll(atIndex, it) }
                 tryAddDelegate(delegate)
             }
@@ -218,34 +228,32 @@ class MutableDelegapter(
     }
 
     fun viewTypeAt(position: Int): Int =
-        viewTypeMap[itemDelegates[position]]!!
+        viewTypeMap[itemDelegates[position].create.actual]!!
 
-    @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("this.forViewType(viewType)(parent)"))
-    fun createViewHolder(parent: ViewGroup, viewType: Int): VH<*, *, *> =
-        viewTypeList[viewType]!!.get()!!(parent)
-
-    fun forViewType(viewType: Int): Delegate<*> =
+    fun forViewType(viewType: Int): ViewHolderFactory =
         viewTypeList[viewType]!!.get()!!
-
-    @Deprecated("I'm a data structure, not an Adapter", ReplaceWith("(holder as VH<*, *, Any?>).bind(this.itemAt(position), position, payloads)"))
-    fun bindViewHolder(holder: VH<*, *, *>, position: Int, payloads: List<Any> = emptyList()): Unit =
-        @Suppress("UNCHECKED_CAST") (holder as VH<*, *, Any?>).bind(items[position], position, payloads)
 
     /**
      * Get `viewType` of the [delegate] in this Delegapter or its parent, or `-1`,
      * if it was never ever added.
      */
-    fun peekViewTypeOf(delegate: Delegate<*>): Int =
-        viewTypeMap[delegate] ?: -1
+    fun peekViewTypeOf(delegate: AdapterDelegate<*, *>): Int =
+        viewTypeMap[delegate.create.actual] ?: -1
+
+    /**
+     * Get `viewType` of the [delegate] in this Delegapter or its parent, or `-1`,
+     * if it was never ever added.
+     */
+    fun peekViewTypeOf(factory: ViewHolderFactory): Int =
+        viewTypeMap[factory.actual] ?: -1
 
     /**
      * Get `viewType` of the [delegate] in this Delegapter or its parent.
      * Adds [delegate] if absent.
-     * Useful when configuring [androidx.recyclerview.widget.RecyclerView.RecycledViewPool].
      */
-    fun forceViewTypeOf(delegate: Delegate<*>): Int {
+    fun forceViewTypeOf(delegate: AdapterDelegate<*, *>): Int {
         tryAddDelegate(delegate)
-        return viewTypeMap[delegate]!!
+        return viewTypeMap[delegate.create.actual]!!
     }
 
 }
@@ -257,17 +265,17 @@ class MutableDelegapter(
     override fun getNewListSize(): Int = new!!.size
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         new!!.delegateAt(newItemPosition).let {
-            it == old!!.delegateAt(oldItemPosition) &&
-                (it as DiffUtil.ItemCallback<Any>)
+            it === old!!.delegateAt(oldItemPosition) &&
+                (it.diff as DiffUtil.ItemCallback<Any>)
                     .areItemsTheSame(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
         }
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         new!!.delegateAt(newItemPosition).let {
-            it == old!!.delegateAt(oldItemPosition) &&
-                (it as DiffUtil.ItemCallback<Any>)
+            it === old!!.delegateAt(oldItemPosition) &&
+                (it.diff as DiffUtil.ItemCallback<Any>)
                     .areContentsTheSame(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
         }
     override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? =
-        (new!!.delegateAt(newItemPosition).takeIf { it == old!!.delegateAt(oldItemPosition) } as DiffUtil.ItemCallback<Any>?)
+        (new!!.delegateAt(newItemPosition).takeIf { it === old!!.delegateAt(oldItemPosition) }?.diff as DiffUtil.ItemCallback<Any>?)
             ?.getChangePayload(old!!.itemAt(oldItemPosition)!!, new!!.itemAt(newItemPosition)!!)
 }

@@ -1,5 +1,5 @@
 
-Yet another adapter delegate library.
+The only adapter delegate library which does the job.
 
 ```groovy
 repositories {
@@ -27,47 +27,50 @@ The concept of this library is to make everything clear and explicit. No binding
 
 ### ViewHolder
 
-We use our own ViewHolder class (called just `VH`) for a bunch of reasons:
-* `RecyclerView.ViewHolder` is abstract, but it's sometimes necessary to create a “dumb” holder without any special fields or behaviour, thus `VH` is `open`
-* There's `RecyclerView.ViewHolder.itemView: View`, but `VH` is generic, and has a property `VH<V, …>.view: V`
-* When using viewBinding, all `ViewHolder`s look the same: they have `binding` field. `VH` supports an attachment of any type which is typically `ViewBinding`: `VH<*, B, …>.binding: B`
-* Delegapter needs to tie certain `ViewHolder` type with the corresponding data type for type safety: `VH<V : View, B, D>`
-* Therefore, `VH<*, *, D>` has its own `bind(D)` method which is a common practice
+You can (but not required to) use our `VH` class for a bunch of reasons:
+* `RecyclerView.ViewHolder` is `abstract`, but it's sometimes necessary to create a “dumb” holder without any special fields or behavior
+* There's `RecyclerView.ViewHolder.itemView: View`, but `VH` is generic, and has a property `VH<V, *>.view: V` exposing `View` subtype
+* When using viewBinding, all `ViewHolder`s look the same: they have `binding` field. `VH` supports an attachment of any type which is typically `ViewBinding`: `VH<*, B>.binding: B`
 
-There's a lot of factory functions for creating ViewHolders:
+For example:
 ```kotlin
 VH(TextView(parent.context).apply {
     layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
     fontRes = R.font.roboto
     textSize = 17f
-}, TextView::setText) // VH<TextView, Nothing?, CharSequence>
+}) // VH<TextView, Nothing?>
 
-inflateVH(parent, ItemUserBinding::inflate) { user: User ->
-    imageLoader.load(user.photo).into(photoView)
-    nameView.text = user.name
-} // VH<View, ItemUserBinding, User>
-
-// and more…
+inflateVH(parent, ItemUserBinding::inflate) // VH<View, ItemUserBinding>
 ```
 
-### Delegate
+### ViewHolder factory
 
-Delegate is just a ViewHolder factory:
-```kotlin
-typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
-```
-`VH::V` and `VH::B` are actually implementation details of a certain `VH`, Delegapter does not need them after instantiation, thus `<*, *`.
+Before we start, we need a `ViewHolderFactory` which is just `(parent: ViewGroup) -> ViewHolder`. 
 
-A typical Delegate declaration looks like this:
+This is as simple as wrapping VH creation in a lambda:
 ```kotlin
-val userDelegate = "user" { parent: ViewGroup ->
+val userVHF = "user" { parent: ViewGroup ->
     inflateVH(…) { … }
 }
 ```
 
 The string before lambda makes it go through library's `String.invoke(lambda)` function to make it named for debugging purposes. (Unfortunately, `tagged@ { lambda }` has no effect on `toString()`.)
 
-Of course, plain lambdas are accepted, too. And `::function` references are also OK and named on their own.
+Of course, plain lambdas can be used, as well as `::function` references (which are named on their own).
+
+### AdapterDelegate
+
+Attaching a binding function to `ViewHolderFactory` yields an `AdapterDelegate`:
+
+```kotlin
+val userDelegate = "user" { parent: ViewGroup ->
+    inflateVH(…) { … }
+} bind { item: User, payloads: List<Any> -> // this: ViewHolder
+    binding.name.text = item.name
+} // AdapterDelegate<User, …>
+```
+
+<!-- TODO -->
 
 ### Delegapter
 
@@ -122,16 +125,16 @@ data.replace {
 }
 ```
 
-A temporary instance of `Delegapter` subclass will be passed to the lambda. Its mutation API is quite similar but requires all your delegates to be `DiffDelegate`. Apart from implementing this interface directly (which is boring) there are two more ways:
+A temporary instance of `Delegapter` subclass will be passed to the lambda. Its mutation API is quite similar but requires all your delegates to be diffable:
 ```kotlin
-val someDelegate = "some delegate" { … }.diff(
+val someDelegate = "some" { … }.bind { … }.diff(
   areItemsTheSame = equateBy(SomeItem::id), /*
   areContentsTheSame = Any::equals,
   getChangePayload = { _, _ -> null },
 */)
 
 
-val otherDelegate = "otherDelegate" { … } + object : DiffUtil.ItemCallback() {
+val otherDelegate = "other" { … }.bind { … } + object : DiffUtil.ItemCallback() {
     override fun are...TheSame(...) = ...
 }
 ```
@@ -150,46 +153,6 @@ layoutManager = GridLayoutManager(context, spanCount, orientation, false).apply 
 
 ### ItemDecoration
 
-Decorating different viewTypes is a stressful job. Here's how Delegapter helps you to add spaces and dividers for items of certain types:
-
-```kotlin
-data.decor(RecyclerView.VERTICAL) {
-  // keep 16dp after header, before user
-  between({ it === headerDelegate }, { it === userDelegate }, size = 16)
-
-  // keep 30dp between any two users
-  between({ it === userDelegate }, size = 30)
-  
-  // text units for text items!
-  between({ it === textDelegate }, size = 16, unit = COMPLEX_UNIT_SP)
-
-  // dividers
-  after({ it === titleDelegate }, size = 1, drawable = ColorDrawable(Color.BLACK))
-
-  // dividers with spaces
-  after(
-    { it === titleDelegate },
-    size = 5,
-    drawable = GradientDrawable().apply {
-      setColor(Color.BLACK)
-      setSize(0, dp(1))
-    },
-    drawableGravity = Gravity.CENTER_VERTICAL or Gravity.FILL_HORIZONTAL,
-  )
-}
-```
-
-Predicates like `{ it === headerDelegate }` look clumsy but are very flexible because you can check for several conditions there, for example, match any type (`{ true }`) or check for external conditions (`{ useTextSpaces && it === textDelegate }`).
-
-`Drawable` will receive `state` and `alpha` from the `View` it belongs to. `bindingAdapterPosition` (or `-1 - layoutPosition`, if the former is not available) will be passed to `Drawable` as `level`.
-
-Note: strictly speaking, `between()` means “attach decoration _after previous_ matching item if _next_ item matches”. Thus, if you're adding new item, you need to `notifyItemChanged(previousItemIndex, anyDummy)` to make this decoration appear.
-
-One more precaution: `.decor()` doesn't know which `LayoutManager` you use. With Grid one, it's your responsibility to mind about rows and columns.
-
-
-### Debugging
-
-Any tool can make you happy until it works fine. And make you hate your job when something gets screwed up. A virtue of any abstraction level is an ability to peek into and see what actually happens. If you feel sad, just pass some booleans around: `decor(orientation, debugDelegates = true, debugSpaces = true)`. This will show you which delegate is used for each item (that's where having named lambdas helps!), or highlight spaces (as on the screenshot).
+TODO
 
 ![Screenshot](screenshot.png)

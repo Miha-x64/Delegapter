@@ -45,10 +45,11 @@ inline fun <D> ((ViewGroup) -> VH<*, *, D>).diff(
  */
 fun <D> ((ViewGroup) -> VH<*, *, D>).diff(): DiffDelegate<D> = this + EqualityDiff
 
-private object EqualityDiff : DiffUtil.ItemCallback<Any?>() {
+@PublishedApi internal object EqualityDiff : DiffUtil.ItemCallback<Any?>() {
     override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean = true
     @SuppressLint("DiffUtilEquals")
     override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean = oldItem == newItem
+    override fun toString(): String = "equality"
 }
 
 /**

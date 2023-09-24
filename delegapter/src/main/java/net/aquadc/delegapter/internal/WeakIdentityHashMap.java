@@ -23,7 +23,7 @@
  * questions.
  */
 
-package net.aquadc.delegapter; // Mike-CHANGED package
+package net.aquadc.delegapter.internal; // Mike-CHANGED package
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -47,8 +47,7 @@ import java.util.*;
  * @author      Mike Gorünóv
  * @see         java.util.WeakHashMap
  */
-// Mike-REMOVED public
-class WeakIdentityHashMap<K,V> // Mike-CHANGED renamed
+public class WeakIdentityHashMap<K,V> // Mike-CHANGED renamed
     extends AbstractMap<K,V>
     implements Map<K,V> {
 
@@ -337,7 +336,7 @@ class WeakIdentityHashMap<K,V> // Mike-CHANGED renamed
     }
 
     // Mike-ADDED
-    WeakReference<K> putAndGetKeyRef(K k, V value) {
+    public WeakReference<K> putAndGetKeyRef(K k, V value) {
         int h = hash(k);
         Entry<K,V>[] tab = getTable();
         int i = indexFor(h, tab.length);

@@ -81,7 +81,7 @@ open class SingleTypeDiffAdapter<D>(
 
 }
 
-private class Differ<T>(private val itemCallback: DiffUtil.ItemCallback<T>) : DiffUtil.Callback() {
+internal class Differ<T>(private val itemCallback: DiffUtil.ItemCallback<in T>) : DiffUtil.Callback() {
     @JvmField var old: List<T>? = null
     @JvmField var new: List<T>? = null
     override fun getOldListSize(): Int = old!!.size
@@ -106,7 +106,7 @@ private class Differ<T>(private val itemCallback: DiffUtil.ItemCallback<T>) : Di
 }
 
 
-private class ObservableList<D>(
+internal class ObservableList<D>(
     @JvmField var list: List<D>,
     private val callback: Adapter<*>, // maybe use ListUpdateCallback and make this class public?
 ) : AbstractMutableList<D>(), RemoveRangeMutableList<D> {

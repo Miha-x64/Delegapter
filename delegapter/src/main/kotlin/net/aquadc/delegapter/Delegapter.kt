@@ -10,6 +10,7 @@ import net.aquadc.delegapter.decor.DelegatePredicate
  * Data structure for holding (delegate, item) pairs with agreed types.
  * @author Mike Gorünóv
  */
+@Deprecated("moved", ReplaceWith("Delegapter", "net.aquadc.delegapter1.Delegapter"))
 abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
     @JvmField protected var itemDelegates: RemoveRangeArrayList<Delegate<*>> = RemoveRangeArrayList.create(initialItemCapacity)
@@ -89,18 +90,21 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
 }
 
+@Deprecated("moved", ReplaceWith("Delegapter(target, parent, initialCapacity)", "net.aquadc.delegapter1.Delegapter"))
 @Suppress("NOTHING_TO_INLINE") @JvmName("create") @JvmOverloads
 inline fun Delegapter(
     target: ListUpdateCallback, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
     MutableDelegapter(target, parent, initialCapacity)
 
+@Deprecated("moved", ReplaceWith("Delegapter(target, parent, initialCapacity)", "net.aquadc.delegapter1.Delegapter"))
 @Suppress("NOTHING_TO_INLINE") @JvmName("create") @JvmOverloads
 inline fun Delegapter(
     target: RecyclerView.Adapter<*>, parent: MutableDelegapter? = null, initialCapacity: Int = -1,
 ): MutableDelegapter =
     MutableDelegapter(target, parent, initialCapacity)
 
+@Deprecated("moved", ReplaceWith("AdapterDelegate<D>", "net.aquadc.delegapter1.AdapterDelegate"))
 typealias Delegate<D> = (parent: ViewGroup) -> VH<*, *, D>
 
 inline fun Delegapter.findIndexOf(
