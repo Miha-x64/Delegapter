@@ -43,7 +43,15 @@ open class VH<out V : View, out B>(
  */
 @JvmName("of")
 inline fun <V : View> VH(view: V): VH<V, Nothing?> =
-    VH(view, null)
+    VH<V, Nothing?>(view, null)
+
+/**
+ * Wrap [view] with the specified [layoutParams] in a [VH].
+ * @see android.view.ViewGroup.addView
+ */
+@JvmName("of")
+fun <V : View> VH(view: V, layoutParams: RecyclerView.LayoutParams?): VH<V, Nothing?> =
+    VH<V, Nothing?>(view.also { it.layoutParams = layoutParams }, null)
 
 /**
  * Wrap [binding]'s [ViewBinding.getRoot] view in a [VH].
@@ -71,4 +79,4 @@ inline fun <B : ViewBinding> inflateVH(
 fun inflateVH(
     parent: ViewGroup, @LayoutRes layout: Int
 ): VH<View, Nothing?> =
-    VH(LayoutInflater.from(parent.context).inflate(layout, parent, false), null)
+    VH<View, Nothing?>(LayoutInflater.from(parent.context).inflate(layout, parent, false), null)
