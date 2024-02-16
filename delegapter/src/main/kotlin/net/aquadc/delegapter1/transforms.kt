@@ -97,12 +97,26 @@ fun <T, R, D : Diff<in R>> AdapterDelegate<R, D>.unmap(transform: (T) -> R): Ada
  * Pre-bind this [AdapterDelegate] with the given [value] yielding an [AdapterDelegate]<[Unit]>.
  */
 fun <T> AdapterDelegate<T, *>.bound(value: T): AdapterDelegate<Unit, Diff<in Unit>> =
-    object : AdapterDelegateTransform<Unit, T, Diff<in Unit>>(create, EqualityDiff, this) {
-        override fun bind(viewHolder: RecyclerView.ViewHolder, item: Unit, payloads: List<Any>): Unit =
-            delegate.bind(viewHolder, value, payloads)
-        override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
-            "echo $value | ${super.toString(create, diff)}"
-    }
+    BoundAdapterDelegate(this, value)
+
+private class BoundAdapterDelegate<T>(
+    delegate: AdapterDelegate<T, *>,
+    @JvmField val value: T,
+) : AdapterDelegateTransform<Unit, T, Diff<in Unit>>(delegate.create, EqualityDiff, delegate) {
+    override fun bind(viewHolder: RecyclerView.ViewHolder, item: Unit, payloads: List<Any>): Unit =
+        delegate.bind(viewHolder, value, payloads)
+    override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+        "echo $value | ${super.toString(create, diff)}"
+    override fun equals(other: Any?): Boolean =
+        other is BoundAdapterDelegate<*> &&
+            other.create == create &&
+            other.delegate == delegate &&
+            other.delegate.diff == delegate.diff &&
+            (delegate.diff?.let {
+                @Suppress("UNCHECKED_CAST") // it's Diff<T> is 'cuz != null; o.value is T 'cuz o.delegate == delegate
+                (it as Diff<T>).areItemsTheSame(other.value as T, value) && it.areContentsTheSame(other.value, value)
+            } ?: (other.value == value))
+}
 
 
 /**
