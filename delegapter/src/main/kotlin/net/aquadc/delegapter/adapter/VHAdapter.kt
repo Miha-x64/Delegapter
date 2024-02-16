@@ -8,6 +8,7 @@ import net.aquadc.delegapter.VH
  * Base [RecyclerView.Adapter] for using with [VH].
  * @author Mike Gorünóv
  */
+@Deprecated("not used anymore")
 abstract class VHAdapter<VHT : VH<*, *, *>> : RecyclerView.Adapter<VHT>() {
 
     // re-abstracted, don't forget to override it plz

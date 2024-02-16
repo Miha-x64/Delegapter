@@ -12,6 +12,8 @@ import net.aquadc.delegapter.VH
  * Adapter for a single viewType and item repeated several times.
  * @author Mike Gorünóv
  */
+@Deprecated("moved",
+    ReplaceWith("RepeatAdapter(delegate, item, size, parent)", "net.aquadc.delegapter1.adapter.RepeatAdapter"))
 open class RepeatAdapter<D>(
     private val delegate: Delegate<D>,
     private val item: D,

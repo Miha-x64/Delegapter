@@ -18,6 +18,7 @@ import java.util.function.Predicate
  * Adapter for a single viewType.
  * @author Mike Gorünóv
  */
+@Deprecated("moved", ReplaceWith("SingleTypeAdapter", "net.aquadc.delegapter1.adapter.SingleTypeAdapter"))
 open class SingleTypeAdapter<D>(
     @JvmField protected val delegate: Delegate<D>,
     items: List<D> = emptyList(),
@@ -46,6 +47,13 @@ open class SingleTypeAdapter<D>(
  * Adapter for a single diffable viewType.
  * @author Mike Gorünóv
  */
+@Deprecated(
+    "moved",
+    ReplaceWith(
+        "SingleTypeDiffAdapter(delegate, items, parent)",
+        "net.aquadc.delegapter1.adapter.SingleTypeDiffAdapter",
+    ),
+)
 open class SingleTypeDiffAdapter<D>(
     delegate: DiffDelegate<D>,
     items: List<D> = emptyList(),

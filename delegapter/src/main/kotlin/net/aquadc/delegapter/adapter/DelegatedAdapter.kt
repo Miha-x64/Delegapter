@@ -9,6 +9,8 @@ import net.aquadc.delegapter.VH
  * An adapter implementation with [Delegapter] inside.
  * @author Mike Gorünóv
  */
+@Deprecated("moved",
+    ReplaceWith("DelegatedAdapter(parent, initialCapacity)", "net.aquadc.delegapter1.adapter.DelegatedAdapter"))
 open class DelegatedAdapter @JvmOverloads constructor(
     parent: MutableDelegapter? = null,
     initialCapacity: Int = -1,
