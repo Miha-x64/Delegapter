@@ -85,8 +85,11 @@ fun <T, D : Diff<T>?> AdapterDelegate<T, D>.background(drawable: Drawable): Adap
 /**
  * Create new [ViewHolderFactory] by adding margin to [RecyclerView.ViewHolder.itemView].
  */
-fun ViewHolderFactory.addMargin(@Px left: Int, @Px top: Int, @Px right: Int, @Px bottom: Int): ViewHolderFactory =
-    then(object : (RecyclerView.ViewHolder) -> Unit {
+fun ViewHolderFactory.withMargins(
+    @Px left: Int = 0, @Px top: Int = 0, @Px right: Int = 0, @Px bottom: Int = 0,
+): ViewHolderFactory =
+    if (left or top or right or bottom == 0) this
+    else then(object : (RecyclerView.ViewHolder) -> Unit {
         override fun invoke(vh: RecyclerView.ViewHolder) {
             val lp = vh.itemView.layoutParams as RecyclerView.LayoutParams
             lp.leftMargin += left
@@ -111,7 +114,7 @@ fun ViewHolderFactory.addMargin(@Px left: Int, @Px top: Int, @Px right: Int, @Px
 /**
  * Create new [AdapterDelegate] by adding margin to [RecyclerView.ViewHolder.itemView].
  */
-fun <T, D : Diff<T>?> AdapterDelegate<T, D>.addMargin(
-    @Px left: Int, @Px top: Int, @Px right: Int, @Px bottom: Int,
+fun <T, D : Diff<T>?> AdapterDelegate<T, D>.withMargins(
+    @Px left: Int = 0, @Px top: Int = 0, @Px right: Int = 0, @Px bottom: Int = 0,
 ): AdapterDelegate<T, D> =
-    copy(create = create.addMargin(left, top, right, bottom) )
+    copy(create = create.withMargins(left, top, right, bottom) )
