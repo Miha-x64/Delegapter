@@ -30,15 +30,17 @@ The concept of this library is to make everything clear and explicit. No binding
 You can (but not required to) use our `VH` class for a bunch of reasons:
 * `RecyclerView.ViewHolder` is `abstract`, but it's sometimes necessary to create a “dumb” holder without any special fields or behavior
 * There's `RecyclerView.ViewHolder.itemView: View`, but `VH` is generic, and has a property `VH<V, *>.view: V` exposing `View` subtype
-* When using viewBinding, all `ViewHolder`s look the same: they have `binding` field. `VH` supports an attachment of any type which is typically `ViewBinding`: `VH<*, B>.binding: B`
+* When using viewBinding, all `ViewHolder`s look the same: they have `binding` field. `VH` supports an attachment of any type which is suitable for ViewBinding: `VH<*, B>.binding: B`
 
-For example:
+Examples:
 ```kotlin
 VH(TextView(parent.context).apply {
     layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
     fontRes = R.font.roboto
     textSize = 17f
 }) // VH<TextView, Nothing?>
+
+inflateVH(parent, R.layout.item) // VH<View, Nothing?>
 
 inflateVH(parent, ItemUserBinding::inflate) // VH<View, ItemUserBinding>
 ```
@@ -50,7 +52,11 @@ Before we start, we need a `ViewHolderFactory` which is just `(parent: ViewGroup
 This is as simple as wrapping VH creation in a lambda:
 ```kotlin
 val userVHF = "user" { parent: ViewGroup ->
-    inflateVH(…) { … }
+    inflateVH(...)
+ // or
+    VH(...)
+ // or
+    MyViewHolder(...)
 }
 ```
 
@@ -65,7 +71,7 @@ Attaching a binding function to `ViewHolderFactory` yields an `AdapterDelegate`:
 ```kotlin
 val userDelegate = "user" { parent: ViewGroup ->
     inflateVH(…) { … }
-} bind { item: User, payloads: List<Any> -> // this: ViewHolder
+}.bind { /*this: ViewHolder, */ item: User, payloads: List<Any> ->
     binding.name.text = item.name
 } // AdapterDelegate<User, …>
 ```
@@ -74,7 +80,7 @@ val userDelegate = "user" { parent: ViewGroup ->
 
 ### Delegapter
 
-Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<D> Pair<Delegate<D>, D>` (non-denotable type in Java/Kotlin). 
+Delegapter is basically a list of (item, delegate) tuples, but their type agreement is guaranteed, like it was a `List<<T> Pair<AdapterDelegate<T>, T>` (non-denotable type in Java/Kotlin). 
 
 Delegapter is not an `Adapter` itself, just a special data structure. Let's use `DelegatedAdapter` for convenience, it already has `val data = Delegapter(this, …)` property inside:
 
@@ -92,6 +98,12 @@ class SomeAdapter : DelegatedAdapter() {
     }
 
 }
+
+// or just
+
+recyclerView.adapter = DelegatedAdapter {
+    add(headerDelegate, "Header")
+}
 ```
 
 You may want to use `Delegapter` with a custom adapter in some advanced usage scenarios:
@@ -101,26 +113,28 @@ You may want to use `Delegapter` with a custom adapter in some advanced usage sc
   (this requires a corrected `ListUpdateCallback`, too)
 * Use several Delegapters in a single Adapter (IDK why but this should happen at some point)
 
-In order to share `RecycledViewPool` between several `RecyclerView`s, you need to use `MutableDelegapter.recycledViewPool` and preserve the same `viewType` to `Delegate` mapping across adapters. The latter can be achieved using a shared “parent” `Delegapter`:
+In order to share `RecycledViewPool` between several `RecyclerView`s, you need to to have shared “parent” `Delegapter` which will maintain stable viewType:ViewHolderFactory mapping:
 
 ```kotlin
 val delegapterFather = Delegapter(NullListUpdateCallback)
 
-class SomeAdapter : RecyclerView.Adapter<…>() { // for custom adapter
+val someAdapter = object : RecyclerView.Adapter<…>() { // for custom adapter
     private val d = Delegapter(this, delegapterFather)
     …
 }
 val otherAdapter = DelegatedAdapter(delegapterFather) // using pre-baked adapter
 ```
 
-Apart from skeletal `VHAdapter` and ready-to-use `DelegatedAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `VH` and `Delegate` for the ease of reuse.
+Apart from skeletal `VHAdapter` and ready-to-use `DelegatedAdapter`, there are two more: `RepeatAdapter` and `SingleTypeAdapter`. They don't use Delegapter but employ `AdapterDelegate` type for the ease of reuse.
+
+All library adapters have their own or parent's `RecycledViewPool` which is attached to the `RecyclerView` automatically.
 
 ### DiffUtil
 
 In order to use `DiffUtil`, you need to call `replace { }` function on a `Delegapter` instance:
 
 ```kotlin
-data.replace {
+delegatedAdapter.data.replace { /* this: Delegapter -> */
     add(...)
 }
 ```
@@ -134,7 +148,7 @@ val someDelegate = "some" { … }.bind { … }.diff(
 */)
 
 
-val otherDelegate = "other" { … }.bind { … } + object : DiffUtil.ItemCallback() {
+val otherDelegate = "other" { … }.bind { … } * object : DiffUtil.ItemCallback() {
     override fun are...TheSame(...) = ...
 }
 ```
@@ -153,6 +167,6 @@ layoutManager = GridLayoutManager(context, spanCount, orientation, false).apply 
 
 ### ItemDecoration
 
-TODO
+Was in pre-1.0, WIP in ongoing release
 
 ![Screenshot](screenshot.png)
