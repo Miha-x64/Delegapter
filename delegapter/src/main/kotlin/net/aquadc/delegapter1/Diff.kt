@@ -11,13 +11,20 @@ internal typealias Diff<T> = DiffUtil.ItemCallback<in T> // just to make it shor
 /**
  * Join this [AdapterDelegate] with the given [DiffUtil.ItemCallback].
  */
-@JvmName("of")
+@Deprecated("Renamed to times because technically it's product", ReplaceWith("this * diff"))
 inline operator fun <T> AdapterDelegate<T, Nothing?>.plus(diff: Diff<T>): AdapterDelegate<T, Diff<T>> =
     AdapterDelegateDecorator(create, diff, this)
 
 /**
+ * Join this [AdapterDelegate] with the given [DiffUtil.ItemCallback].
+ */
+@JvmName("of")
+inline operator fun <T> AdapterDelegate<T, Nothing?>.times(diff: Diff<T>): AdapterDelegate<T, Diff<T>> =
+    AdapterDelegateDecorator(create, diff, this)
+
+/**
  * Replace this [AdapterDelegate.diff] with [diff] instance.
- * Like [plus] but can be applied to any [AdapterDelegate], without `D=Nothing?` requirement.
+ * Like [times] but can be applied to any [AdapterDelegate], without `D=Nothing?` requirement.
  */
 fun <T, D : Diff<T>?> AdapterDelegate<T, *>.copy(diff: D): AdapterDelegate<T, D> =
     AdapterDelegateDecorator(create, diff, this)
