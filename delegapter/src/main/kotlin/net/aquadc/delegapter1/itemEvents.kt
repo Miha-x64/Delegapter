@@ -1,4 +1,4 @@
-@file:JvmName("AdapterDelegateClick")
+@file:JvmName("ItemEvents")
 package net.aquadc.delegapter1
 
 import android.view.View
