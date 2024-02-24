@@ -10,6 +10,7 @@ import net.aquadc.delegapter.RemoveRangeArrayList
  * Data structure for holding (delegate, item) pairs with agreed types.
  * @author Mike Gorünóv
  */
+@Suppress("KDocMissingDocumentation") // all members have obvious purposes
 abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
     @JvmField protected var itemDelegates: RemoveRangeArrayList<AdapterDelegate<*, *>> = RemoveRangeArrayList.create(initialItemCapacity)

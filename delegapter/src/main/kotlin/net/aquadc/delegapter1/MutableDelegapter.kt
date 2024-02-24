@@ -20,6 +20,7 @@ import java.lang.ref.WeakReference
  * @param initialDelegateCapacity how many delegates expected to manage. Ignored if [parent] is specified
  * @param initialItemCapacity how many items expected to manage
  */
+@Suppress("KDocMissingDocumentation") // all members have obvious purposes
 class MutableDelegapter(
     private val target: ListUpdateCallback,
     private val parent: MutableDelegapter? = null,
