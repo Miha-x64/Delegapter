@@ -50,7 +50,8 @@ open class AdapterDelegateDecorator<T, D : Diff<in T>?>(
 inline fun <T, D : Diff<in T>?> AdapterDelegate<T, D>.copy(
     noinline create: ViewHolderFactory = this.create,
 ): AdapterDelegate<T, D> =
-    AdapterDelegateDecorator(create, diff, this)
+    if (this.create === create) this
+    else AdapterDelegateDecorator(create, diff, this)
 
 private fun <R, T> Diff<R>.unmap(transform: (T) -> R): Diff<T> = object : DiffUtil.ItemCallback<T>() {
     override fun areItemsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
