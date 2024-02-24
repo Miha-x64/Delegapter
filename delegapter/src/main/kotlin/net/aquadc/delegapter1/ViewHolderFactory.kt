@@ -49,7 +49,7 @@ fun <VH : RecyclerView.ViewHolder> VHF<VH>.then(block: VH.() -> Unit): VHF<VH> {
 /**
  * Create [AdapterDelegate] from [ViewHolderFactory] and [bind]ing function.
  */
-inline infix fun <VH : RecyclerView.ViewHolder, T> ((parent: ViewGroup) -> VH).bind(
+inline fun <VH : RecyclerView.ViewHolder, T> ((parent: ViewGroup) -> VH).bind(
     crossinline bind: VH.(item: T, payloads: List<Any>) -> Unit,
 ): AdapterDelegate<T, Nothing?> = object : AdapterDelegate<T, Nothing?>(this, null) {
     override fun bind(viewHolder: RecyclerView.ViewHolder, item: T, payloads: List<Any>): Unit =
@@ -70,7 +70,7 @@ fun ViewHolderFactory.bind(): AdapterDelegate<Unit, Nothing?> =
  * Create [AdapterDelegate] from [ViewHolderFactory] and [bind]ing function.
  */
 @JvmName("bindWithRecycleHook")
-inline infix fun <VH, T> ((parent: ViewGroup) -> VH).bind(
+inline fun <VH, T> ((parent: ViewGroup) -> VH).bind(
     crossinline bind: VH.(item: T, payloads: List<Any>) -> Unit,
 ): AdapterDelegate<T, Nothing?> where VH : RecyclerView.ViewHolder, VH : Recyclable =
     @Suppress("UNCHECKED_CAST") // VH type is AD's implementation detail not visible through type
