@@ -11,33 +11,32 @@ import net.aquadc.delegapter1.Diff
 import net.aquadc.delegapter1.MutableDelegapter
 
 /**
- * Adapter for a single viewType.
+ * Base class for homogenous (based on single [AdapterDelegate]) adapters
  * @author Mike Gorünóv
  */
-open class SingleTypeAdapter<T>(
+abstract class SingleDelegateAdapter<T>(
     @JvmField protected val delegate: AdapterDelegate<T, *>,
-    items: List<T> = emptyList(),
-    parent: MutableDelegapter? = null,
+    parent: MutableDelegapter?,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val viewType = parent?.forceViewTypeOf(delegate) ?: 0
+    private val recycledViewPool = parent?.recycledViewPool
 
-    open val items: RemoveRangeMutableList<T> = ObservableList(items, this)
-
-    override fun getItemCount(): Int =
-        items.size
+    private val viewType =
+        parent?.forceViewTypeOf(delegate) ?: 0
 
     override fun getItemViewType(position: Int): Int =
         viewType
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        if (recycledViewPool != null)
+            recyclerView.setRecycledViewPool(recycledViewPool)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         delegate.create(parent)
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int): Unit =
-        throw AssertionError() // unused
-
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>): Unit =
-        delegate.bind(holder, items[position], payloads)
+        throw AssertionError()
 
     override fun onViewRecycled(holder: RecyclerView.ViewHolder): Unit =
         delegate.recycled(holder)
@@ -45,7 +44,54 @@ open class SingleTypeAdapter<T>(
 }
 
 /**
- * Adapter for a single diffable viewType.
+ * Adapter for a single viewType and item repeated several times
+ * @author Mike Gorünóv
+ */
+open class RepeatAdapter(
+    delegate: AdapterDelegate<Unit, *>,
+    size: Int = 1,
+    parent: MutableDelegapter? = null,
+) : SingleDelegateAdapter<Unit>(delegate, parent) {
+
+    var size: Int = size
+        set(value) {
+            if (field != value) {
+                if (field > value) notifyItemRangeRemoved(value, field - value)
+                else notifyItemRangeInserted(field, value - field)
+                field = value
+            }
+        }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>): Unit =
+        delegate.bind(holder, Unit, payloads)
+
+    override fun getItemCount(): Int =
+        size
+
+}
+
+/**
+ * List adapter for a single viewType
+ * @author Mike Gorünóv
+ */
+open class SingleTypeAdapter<T>(
+    delegate: AdapterDelegate<T, *>,
+    items: List<T> = emptyList(),
+    parent: MutableDelegapter? = null,
+) : SingleDelegateAdapter<T>(delegate, parent) {
+
+    open val items: RemoveRangeMutableList<T> = ObservableList(items, this)
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>): Unit =
+        delegate.bind(holder, items[position], payloads)
+
+    override fun getItemCount(): Int =
+        items.size
+
+}
+
+/**
+ * Adapter for a single diffable viewType
  * @author Mike Gorünóv
  */
 open class SingleTypeDiffAdapter<T>(

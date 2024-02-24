@@ -35,4 +35,8 @@ open class DelegatedAdapter @JvmOverloads constructor(
     override fun onViewRecycled(holder: RecyclerView.ViewHolder): Unit =
         data.delegateAt(holder.bindingAdapterPosition).recycled(holder)
 
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        recyclerView.setRecycledViewPool(data.recycledViewPool)
+    }
+
 }
