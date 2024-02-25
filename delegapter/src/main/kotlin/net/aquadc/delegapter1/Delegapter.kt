@@ -21,21 +21,6 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
     abstract fun <T> add(delegate: AdapterDelegate<T, Diff<T>>, item: T, atIndex: Int = size)
     abstract fun <T> set(delegate: AdapterDelegate<T, Diff<T>>, item: T, atIndex: Int)
     abstract fun <T> addAll(delegate: AdapterDelegate<T, Diff<T>>, items: Collection<T>, atIndex: Int = size)
-    // e.g. you've computed a chunk on a background thread and want to add its contents
-    fun addAll(from: Delegapter, fromIndex: Int = 0, toIndex: Int = from.size, atIndex: Int = size) {
-        require(fromIndex >= 0 && toIndex <= from.size)
-        if (fromIndex == toIndex) return
-
-        var items: List<Any?> = from.items
-        var itemDelegates: List<AdapterDelegate<*, *>> = from.itemDelegates
-        if (fromIndex != 0 || toIndex != from.size) {
-            items = items.subList(fromIndex, toIndex)
-            itemDelegates = itemDelegates.subList(fromIndex, toIndex)
-        }
-
-        addAll(items, itemDelegates, atIndex)
-    }
-    protected abstract fun addAll(items: List<Any?>, itemDelegates: List<AdapterDelegate<*, *>>, atIndex: Int)
 
     // use like a List
 
