@@ -147,44 +147,53 @@ class MutableDelegapter(
         itemDelegates.removeAt(position)
         target.onRemoved(position, 1)
     }
-    fun removeRange(start: Int, endEx: Int) {
+    fun removeRange(start: Int, endEx: Int): Int {
         items.removeRange(start, endEx)
         itemDelegates.removeRange(start, endEx)
-        target.onRemoved(start, endEx - start)
+        val count = endEx - start
+        target.onRemoved(start, count)
+        return count
     }
-    fun removeAll(items: Collection<Any?>): Boolean = batchRemove(items, false)
-    fun retainAll(items: Collection<Any?>): Boolean = batchRemove(items, true)
-    private fun batchRemove(items: Collection<Any?>, complement: Boolean): Boolean =
+    fun removeAll(items: Collection<Any?>): Int =
+        batchRemove(items, false)
+    fun retainAll(items: Collection<Any?>): Int =
+        batchRemove(items, true)
+    private fun batchRemove(items: Collection<Any?>, complement: Boolean): Int =
         batchRemoveIf { items.contains(this.items[it]) != complement }
-    @JvmName("removeAllBy") fun removeAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, false)
-    @JvmName("retainAllBy") fun retainAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, true)
-    private fun batchRemoveBy(delegate: AdapterDelegate<*, *>, complement: Boolean): Boolean =
+    @JvmName("removeAllBy") fun removeAll(delegate: AdapterDelegate<*, *>): Int =
+        batchRemoveBy(delegate, false)
+    @JvmName("retainAllBy") fun retainAll(delegate: AdapterDelegate<*, *>): Int =
+        batchRemoveBy(delegate, true)
+    private fun batchRemoveBy(delegate: AdapterDelegate<*, *>, complement: Boolean): Int =
         batchRemoveIf { (itemDelegates[it] == delegate) != complement }
-    @JvmName("removeAllBy") fun removeAll(delegates: Collection<AdapterDelegate<*, *>>): Boolean = batchRemoveBy(delegates, false)
-    @JvmName("retainAllBy") fun retainAll(delegates: Collection<AdapterDelegate<*, *>>): Boolean = batchRemoveBy(delegates, true)
-    private fun batchRemoveBy(delegates: Collection<AdapterDelegate<*, *>>, complement: Boolean): Boolean =
+    @JvmName("removeAllBy") fun removeAll(delegates: Collection<AdapterDelegate<*, *>>): Int =
+        batchRemoveBy(delegates, false)
+    @JvmName("retainAllBy") fun retainAll(delegates: Collection<AdapterDelegate<*, *>>): Int =
+        batchRemoveBy(delegates, true)
+    private fun batchRemoveBy(delegates: Collection<AdapterDelegate<*, *>>, complement: Boolean): Int =
         batchRemoveIf { delegates.contains(itemDelegates[it]) != complement }
-    private inline fun batchRemoveIf(predicate: (Int) -> Boolean): Boolean {
+    private inline fun batchRemoveIf(predicate: (Int) -> Boolean): Int {
         var removed = 0
         for (i in itemDelegates.indices) if (predicate(i)) {
             items.markForRemoval(i)
             itemDelegates.markForRemoval(i)
             target.onRemoved(i - removed++, 1)
         }
-        return if (removed > 0) {
+        if (removed > 0) {
             items.commitRemovals()
             itemDelegates.commitRemovals()
-            true
-        } else false
+        }
+        return removed
     }
 
-    fun clear() {
-        if (!isEmpty) {
-            val size = items.size
+    fun clear(): Int {
+        val size = items.size
+        if (size > 0) { // don't bother `target` if empty
             items.clear()
             itemDelegates.clear()
             target.onRemoved(0, size)
         }
+        return size
     }
 
     // adapter-specific things
