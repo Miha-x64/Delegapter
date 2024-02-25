@@ -10,16 +10,6 @@ import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 
 
-/**
- * Create new [AdapterDelegate] by altering [ViewType]'s maxRecycledViews
- *
- * In a “normal” `{ VH() }.maxRecycledViews(n).bind {}` scenario you won't need it,
- * but it's useful when altering an existing [AdapterDelegate] like
- * `textDelegate.maxRecycledViews(1).bound("Loading…")`
- */
-fun <T, D : Diff<T>> AdapterDelegate<T, D>.maxRecycledViews(count: Int): AdapterDelegate<T, D> =
-    copy(create.maxRecycledViews(count))
-
 @RequiresApi(21) private class ViewHolderBackground(
     private var drawable: Drawable?,
     private val factory: Drawable.ConstantState,
