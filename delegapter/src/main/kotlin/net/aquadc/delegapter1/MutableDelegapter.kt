@@ -71,7 +71,7 @@ class MutableDelegapter(
     override fun <D> add(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int): Unit =
         add(delegate as AdapterDelegate<D, *>, item, atIndex)
     @JvmName("addItem")
-    @JvmOverloads fun <D> add(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int = size) {
+    fun <D> add(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int = size) {
         items.add(atIndex, item)
         itemDelegates.add(atIndex, delegate)
         target.onInserted(atIndex, 1)
@@ -81,7 +81,7 @@ class MutableDelegapter(
     override fun <D> set(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int): Unit =
         set(delegate as AdapterDelegate<D, *>, item, atIndex)
     @JvmName("setItem")
-    @JvmOverloads fun <D> set(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int, payload: Any? = null) {
+    fun <D> set(delegate: AdapterDelegate<D, *>, item: D, atIndex: Int, payload: Any? = null) {
         items[atIndex] = item
         itemDelegates[atIndex] = delegate
         target.onChanged(atIndex, 1, payload)
@@ -91,7 +91,7 @@ class MutableDelegapter(
     override fun <D> addAll(delegate: AdapterDelegate<D, Diff<D>>, items: Collection<D>, atIndex: Int): Unit =
         addAll(delegate as AdapterDelegate<D, *>, items, atIndex)
     @JvmName("addItems")
-    @JvmOverloads fun <D> addAll(delegate: AdapterDelegate<D, *>, items: Collection<D>, atIndex: Int = size) {
+    fun <D> addAll(delegate: AdapterDelegate<D, *>, items: Collection<D>, atIndex: Int = size) {
         if (items.isNotEmpty()) {
             this.items.addAll(atIndex, items)
             (repeat ?: RepeatList<AdapterDelegate<*, *>>().also { repeat = it })
