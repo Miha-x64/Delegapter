@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 
 /**
- * Create new [AdapterDelegate] by altering [ViewHolderFactory]'s maxRecycledViews
+ * Create new [AdapterDelegate] by altering [ViewType]'s maxRecycledViews
  *
  * In a “normal” `{ VH() }.maxRecycledViews(n).bind {}` scenario you won't need it,
  * but it's useful when altering an existing [AdapterDelegate] like
@@ -43,13 +43,13 @@ fun <T, D : Diff<T>> AdapterDelegate<T, D>.maxRecycledViews(count: Int): Adapter
 }
 
 /**
- * Create new [ViewHolderFactory] by adding background from [factory].
+ * Create new [ViewType] by adding background from [factory].
  * If [RecyclerView.ViewHolder.itemView] already has a background,
  * it will be preserved, and new background will be added behind.
  * On Android versions <21 composite background [may be screwed][LayerDrawable.PADDING_MODE_NEST].
  */
 @RequiresApi(21)
-fun ViewHolderFactory.background(factory: Drawable.ConstantState): ViewHolderFactory =
+fun ViewType.background(factory: Drawable.ConstantState): ViewType =
     then(ViewHolderBackground(null, factory))
 
 /**
@@ -63,13 +63,13 @@ fun <T, D : Diff<T>?> AdapterDelegate<T, D>.background(factory: Drawable.Constan
     copy(create = create.background(factory))
 
 /**
- * Create new [ViewHolderFactory] by adding background [drawable]. It must implement [Drawable.getConstantState].
+ * Create new [ViewType] by adding background [drawable]. It must implement [Drawable.getConstantState].
  * If [RecyclerView.ViewHolder.itemView] already has a background,
  * it will be preserved, and new background will be added behind.
  * On Android versions <21 composite background [may be screwed][LayerDrawable.PADDING_MODE_NEST].
  */
 @RequiresApi(21)
-fun ViewHolderFactory.background(drawable: Drawable): ViewHolderFactory =
+fun ViewType.background(drawable: Drawable): ViewType =
     then(ViewHolderBackground(drawable, drawable.constantState!!))
 
 /**
@@ -83,11 +83,11 @@ fun <T, D : Diff<T>?> AdapterDelegate<T, D>.background(drawable: Drawable): Adap
     copy(create = create.background(drawable))
 
 /**
- * Create new [ViewHolderFactory] by adding margin to [RecyclerView.ViewHolder.itemView].
+ * Create new [ViewType] by adding margin to [RecyclerView.ViewHolder.itemView].
  */
-fun ViewHolderFactory.withMargins(
+fun ViewType.withMargins(
     @Px left: Int = 0, @Px top: Int = 0, @Px right: Int = 0, @Px bottom: Int = 0,
-): ViewHolderFactory =
+): ViewType =
     if (left or top or right or bottom == 0) this
     else then(object : (RecyclerView.ViewHolder) -> Unit {
         override fun invoke(vh: RecyclerView.ViewHolder) {

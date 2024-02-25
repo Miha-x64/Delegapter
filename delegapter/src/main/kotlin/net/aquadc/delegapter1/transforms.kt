@@ -16,7 +16,7 @@ import net.aquadc.delegapter.internal.WeakIdentityHashMap
  * @author Mike Gorünóv
  */
 abstract class AdapterDelegateTransform<T, U, D : Diff<in T>?>(
-    create: ViewHolderFactory,
+    create: ViewType,
     diff: D,
     /**
      * The other [AdapterDelegate] which does the job.
@@ -25,7 +25,7 @@ abstract class AdapterDelegateTransform<T, U, D : Diff<in T>?>(
 ) : AdapterDelegate<T, D>(create, diff) {
     @CallSuper override fun recycled(viewHolder: RecyclerView.ViewHolder): Unit =
         delegate.recycled(viewHolder)
-    override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+    override fun toString(create: ViewType, diff: Diff<*>?): String =
         delegate.toString(create, diff)
 }
 
@@ -34,7 +34,7 @@ abstract class AdapterDelegateTransform<T, U, D : Diff<in T>?>(
  * @author Mike Gorünóv
  */
 open class AdapterDelegateDecorator<T, D : Diff<in T>?>(
-    create: ViewHolderFactory,
+    create: ViewType,
     diff: D,
     delegate: AdapterDelegate<T, *>,
 ) : AdapterDelegateTransform<T, T, D>(create, diff, delegate) {
@@ -48,7 +48,7 @@ open class AdapterDelegateDecorator<T, D : Diff<in T>?>(
  * @see [then]
  */
 inline fun <T, D : Diff<in T>?> AdapterDelegate<T, D>.copy(
-    noinline create: ViewHolderFactory = this.create,
+    noinline create: ViewType = this.create,
 ): AdapterDelegate<T, D> =
     if (this.create === create) this
     else AdapterDelegateDecorator(create, diff, this)
@@ -89,7 +89,7 @@ fun <T, R, D : Diff<in R>> AdapterDelegate<R, D>.unmap(transform: (T) -> R): Ada
     object : AdapterDelegateTransform<T, R, D>(create, diff, this) {
         override fun bind(viewHolder: RecyclerView.ViewHolder, item: T, payloads: List<Any>): Unit =
             delegate.bind(viewHolder, transform(item), payloads)
-        override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+        override fun toString(create: ViewType, diff: Diff<*>?): String =
             buildString { appendFun(transform).append(" | ").append(super.toString(create, diff)) }
         //   https://linuxhint.com/bash_pipe_tutorial/ -^
     }
@@ -106,7 +106,7 @@ private class BoundAdapterDelegate<T>(
 ) : AdapterDelegateTransform<Unit, T, Diff<in Unit>>(delegate.create, EqualityDiff, delegate) {
     override fun bind(viewHolder: RecyclerView.ViewHolder, item: Unit, payloads: List<Any>): Unit =
         delegate.bind(viewHolder, value, payloads)
-    override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+    override fun toString(create: ViewType, diff: Diff<*>?): String =
         "echo $value | ${super.toString(create, diff)}"
     override fun equals(other: Any?): Boolean =
         other is BoundAdapterDelegate<*> &&
@@ -183,6 +183,6 @@ abstract class AdapterDelegateTransformWSideTable<T, U>(
             }
         }
     }
-    override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+    override fun toString(create: ViewType, diff: Diff<*>?): String =
         "${javaClass.name}(${delegate.toString(create, diff)})"
 }

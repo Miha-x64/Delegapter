@@ -19,7 +19,7 @@ abstract class AdapterDelegate<in T, D : Diff<T>?>(
      * Called from [RecyclerView.Adapter.onCreateViewHolder].
      * [Equal][Any.equals] instances share the same [view type][RecyclerView.Adapter.getItemViewType].
      */
-    @JvmField val create: ViewHolderFactory,
+    @JvmField val create: ViewType,
 
     /**
      * Optional [DiffUtil.ItemCallback] instance.
@@ -43,7 +43,7 @@ abstract class AdapterDelegate<in T, D : Diff<T>?>(
      * String representation of an [AdapterDelegate] like this
      * but with the given [ViewHolder factory][create] and [diff].
      */
-    protected open fun toString(create: ViewHolderFactory, diff: Diff<*>?): String = buildString {
+    protected open fun toString(create: ViewType, diff: Diff<*>?): String = buildString {
         append("AD").append('(').appendVHF(create).append(')')
         if (diff != null) append(" ≏ ").append(diff)
     }
@@ -51,7 +51,7 @@ abstract class AdapterDelegate<in T, D : Diff<T>?>(
     /**
      * Call other instance's protected function bypassing Kotlin access rules.
      */
-    protected inline fun AdapterDelegate<*, *>.toString(noinline create: ViewHolderFactory, diff: Diff<*>?): String =
+    protected inline fun AdapterDelegate<*, *>.toString(noinline create: ViewType, diff: Diff<*>?): String =
         toString(create, diff)
 
     final override fun toString(): String =

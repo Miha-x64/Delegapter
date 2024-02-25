@@ -24,14 +24,14 @@ import kotlin.reflect.typeOf
 }
 
 /**
- * Create new [ViewHolderFactory] by setting [inAdapterAtPosition] callback
+ * Create new [ViewType] by setting [inAdapterAtPosition] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Will crash if it already [has onClick listener][View.hasOnClickListeners] or [is clickable][View.isClickable].
  * The callback won't be triggered if [RecyclerView.ViewHolder.getBindingAdapterPosition] is invalid.
  */
-@JvmName("onClickInAdapterAtPosition") inline fun ViewHolderFactory.onClick(
+@JvmName("onClickInAdapterAtPosition") inline fun ViewType.onClick(
     crossinline inAdapterAtPosition: RecyclerView.ViewHolder.(RecyclerView.Adapter<*>, position: Int) -> Unit,
-): ViewHolderFactory {
+): ViewType {
     val clickListener = View.OnClickListener {
         val vh = (it.parent as RecyclerView).getChildViewHolder(it)
         val pos = vh.bindingAdapterPosition
@@ -42,7 +42,7 @@ import kotlin.reflect.typeOf
 }
 
 /**
- * Create new [AdapterDelegate] and [ViewHolderFactory] by setting [inAdapterAtPosition] callback
+ * Create new [AdapterDelegate] and [ViewType] by setting [inAdapterAtPosition] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Will crash if it already [has onClick listener][View.hasOnClickListeners] or [is clickable][View.isClickable].
  * The callback won't be triggered if [RecyclerView.ViewHolder.getBindingAdapterPosition] is invalid.
@@ -54,18 +54,18 @@ import kotlin.reflect.typeOf
 
 
 /**
- * Create new [ViewHolderFactory] by setting [atPosition] callback
+ * Create new [ViewType] by setting [atPosition] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Will crash if it already [has onClick listener][View.hasOnClickListeners] or [is clickable][View.isClickable].
  * The callback won't be triggered if [RecyclerView.ViewHolder.getBindingAdapterPosition] is invalid.
  */
-@JvmName("onClickAtPosition") inline fun ViewHolderFactory.onClick(
+@JvmName("onClickAtPosition") inline fun ViewType.onClick(
     crossinline atPosition: RecyclerView.ViewHolder.(position: Int) -> Unit,
-): ViewHolderFactory =
+): ViewType =
     onClick(inAdapterAtPosition = { _, pos -> atPosition(pos) })
 
 /**
- * Create new [ViewHolderFactory] by setting [atPosition] callback
+ * Create new [ViewType] by setting [atPosition] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Will crash if it already [has onClick listener][View.hasOnClickListeners] or [is clickable][View.isClickable].
  * The callback won't be triggered if [RecyclerView.ViewHolder.getBindingAdapterPosition] is invalid.
@@ -77,7 +77,7 @@ import kotlin.reflect.typeOf
 
 
 @PublishedApi internal class BoundItemSpy<T, D : Diff<T>?>(
-    create: ViewHolderFactory,
+    create: ViewType,
     delegate: AdapterDelegate<T, D>,
     private val bound: WeakIdentityHashMap<RecyclerView.ViewHolder, T>,
     private val typeProvider: Any,
@@ -90,7 +90,7 @@ import kotlin.reflect.typeOf
         bound.remove(viewHolder)
         super.recycled(viewHolder)
     }
-    override fun toString(create: ViewHolderFactory, diff: Diff<*>?): String =
+    override fun toString(create: ViewType, diff: Diff<*>?): String =
         buildString {
             val ts = typeProvider.toString()
             append(super.toString(create, diff)).append(", ")
@@ -99,7 +99,7 @@ import kotlin.reflect.typeOf
 }
 
 /**
- * Create new [AdapterDelegate] and [ViewHolderFactory] by setting [withItem] callback
+ * Create new [AdapterDelegate] and [ViewType] by setting [withItem] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Has some extra overhead for tracking bound items.
  */
@@ -119,7 +119,7 @@ import kotlin.reflect.typeOf
 }
 
 /**
- * Create new [AdapterDelegate] and [ViewHolderFactory] by setting [withItem] callback
+ * Create new [AdapterDelegate] and [ViewType] by setting [withItem] callback
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Has some extra overhead for tracking bound items.
  */

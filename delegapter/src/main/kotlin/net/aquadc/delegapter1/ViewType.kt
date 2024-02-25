@@ -1,4 +1,4 @@
-@file:JvmName("ViewHolderFactory")
+@file:JvmName("ViewType")
 package net.aquadc.delegapter1
 
 import android.view.ViewGroup
@@ -7,9 +7,9 @@ import net.aquadc.delegapter.appendFun
 import net.aquadc.delegapter.appendVHF
 
 /**
- * Instantiates [RecyclerView.ViewHolder]s.
+ * Instantiates [RecyclerView.ViewHolder]s
  */
-typealias ViewHolderFactory = (parent: ViewGroup) -> RecyclerView.ViewHolder
+typealias ViewType = (parent: ViewGroup) -> RecyclerView.ViewHolder
 
 private typealias VHF<VH> = (parent: ViewGroup) -> VH // make it shorter
 
@@ -32,7 +32,7 @@ fun <VH : RecyclerView.ViewHolder> VHF<VH>.maxRecycledViews(count: Int): (parent
 }
 
 /**
- * Apply additional changes to a [RecyclerView.ViewHolder] newly instantiated by this [ViewHolderFactory].
+ * Apply additional changes to a [RecyclerView.ViewHolder] newly instantiated by this [ViewType].
  */
 fun <VH : RecyclerView.ViewHolder> VHF<VH>.then(block: VH.() -> Unit): VHF<VH> {
     val base = if (this is VHFMaxScrap) factory else this
@@ -47,7 +47,7 @@ fun <VH : RecyclerView.ViewHolder> VHF<VH>.then(block: VH.() -> Unit): VHF<VH> {
 }
 
 /**
- * Create [AdapterDelegate] from [ViewHolderFactory] and [bind]ing function.
+ * Create [AdapterDelegate] from [ViewType] and [bind]ing function.
  */
 inline fun <VH : RecyclerView.ViewHolder, T> ((parent: ViewGroup) -> VH).bind(
     crossinline bind: VH.(item: T, payloads: List<Any>) -> Unit,
@@ -58,16 +58,16 @@ inline fun <VH : RecyclerView.ViewHolder, T> ((parent: ViewGroup) -> VH).bind(
 }
 
 /**
- * Create [AdapterDelegate]<[Unit]> from [ViewHolderFactory].
+ * Create [AdapterDelegate]<[Unit]> from [ViewType].
  */
-fun ViewHolderFactory.bind(): AdapterDelegate<Unit, Nothing?> =
+fun ViewType.bind(): AdapterDelegate<Unit, Nothing?> =
     object : AdapterDelegate<Unit, Nothing?>(this, null) {
         override fun bind(viewHolder: RecyclerView.ViewHolder, item: Unit, payloads: List<Any>): Unit =
             Unit
     }
 
 /**
- * Create [AdapterDelegate] from [ViewHolderFactory] and [bind]ing function.
+ * Create [AdapterDelegate] from [ViewType] and [bind]ing function.
  */
 @JvmName("bindWithRecycleHook")
 inline fun <VH, T> ((parent: ViewGroup) -> VH).bind(

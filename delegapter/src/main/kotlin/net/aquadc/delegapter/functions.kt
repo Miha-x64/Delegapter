@@ -3,7 +3,7 @@ package net.aquadc.delegapter
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import net.aquadc.delegapter1.ViewHolderFactory
+import net.aquadc.delegapter1.ViewType
 import java.lang.reflect.ParameterizedType
 import kotlin.jvm.internal.CallableReference
 import kotlin.jvm.internal.FunctionReference
@@ -51,7 +51,7 @@ internal val String.eatUnavailableReflectComplaint
     get() = length -
         if (endsWith(" (Kotlin reflection is not available)")) " (Kotlin reflection is not available)".length else 0
 
-internal fun StringBuilder.appendVHF(factory: ViewHolderFactory): StringBuilder {
+internal fun StringBuilder.appendVHF(factory: ViewType): StringBuilder {
     if (factory is Named) return append('“').append(factory).append('”')
     val rt =
         (factory.takeIf { it.javaClass.superclass == Lambda::class.java }

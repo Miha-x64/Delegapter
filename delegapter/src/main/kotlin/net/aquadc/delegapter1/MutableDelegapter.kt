@@ -37,8 +37,8 @@ class MutableDelegapter(
         AdapterListUpdateCallback(target), parent, initialDelegateCapacity, initialCapacity,
     )
 
-    private val viewTypeList: RemoveRangeArrayList<WeakReference<ViewHolderFactory>?>
-    private val viewTypeMap: WeakIdentityHashMap<ViewHolderFactory, Int>
+    private val viewTypeList: RemoveRangeArrayList<WeakReference<ViewType>?>
+    private val viewTypeMap: WeakIdentityHashMap<ViewType, Int>
 
     private var repeat: RepeatList<AdapterDelegate<*, *>>? = null
         get() = field ?: parent?.repeat
@@ -53,7 +53,7 @@ class MutableDelegapter(
     init {
         if (parent == null) {
             viewTypeList = RemoveRangeArrayList.create(initialDelegateCapacity)
-            viewTypeMap = object : WeakIdentityHashMap<ViewHolderFactory, Int>(
+            viewTypeMap = object : WeakIdentityHashMap<ViewType, Int>(
                 if (initialDelegateCapacity < 0) 16 else initialDelegateCapacity,
             ) {
                 override fun staleEntryExpunged(value: Int) {
@@ -123,7 +123,7 @@ class MutableDelegapter(
             }
         }
     }
-    private val ViewHolderFactory.actual
+    private val ViewType.actual
         get() = if (this is VHFMaxScrap) this.factory else this
 
     fun remove(element: Any?): Boolean {
@@ -227,7 +227,7 @@ class MutableDelegapter(
     fun viewTypeAt(position: Int): Int =
         viewTypeMap[itemDelegates[position].create.actual]!!
 
-    fun forViewType(viewType: Int): ViewHolderFactory =
+    fun forViewType(viewType: Int): ViewType =
         viewTypeList[viewType]!!.get()!!
 
     /**
@@ -241,7 +241,7 @@ class MutableDelegapter(
      * Get `viewType` of the [delegate] in this Delegapter or its parent, or `-1`,
      * if it was never ever added.
      */
-    fun peekViewTypeOf(factory: ViewHolderFactory): Int =
+    fun peekViewTypeOf(factory: ViewType): Int =
         viewTypeMap[factory.actual] ?: -1
 
     /**
