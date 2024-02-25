@@ -36,11 +36,11 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
     fun delegateAt(position: Int): AdapterDelegate<*, *> =
         itemDelegates[position]
 
-    fun contains(element: Any?): Boolean =
-        items.contains(element)
+    fun contains(item: Any?): Boolean =
+        items.contains(item)
 
-    fun containsAll(elements: Collection<Any?>): Boolean =
-        items.containsAll(elements)
+    fun containsAll(items: Collection<Any?>): Boolean =
+        this.items.containsAll(items)
 
     fun containsAny(delegate: AdapterDelegate<*, *>): Boolean =
         itemDelegates.contains(delegate)
