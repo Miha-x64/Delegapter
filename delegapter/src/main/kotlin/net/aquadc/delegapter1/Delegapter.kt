@@ -44,27 +44,27 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
 
     fun <T> indexOf(
         delegate: AdapterDelegate<T, *>, item: T,
-        startIndex: Int = 0, direction: Int = 1,
+        startIndex: Int = 0, step: Int = 1,
     ): Int {
-        require(direction != 0)
+        require(step != 0)
         var i = startIndex
         while (i in 0 until size) {
             if (delegate == itemDelegates[i] && item == items[i])
                 return i
-            i += direction
+            i += step
         }
         return -1
     }
     fun <T> indexOf(
         delegate: AdapterDelegate<T, *>,
-        startIndex: Int = 0, direction: Int = 1,
+        startIndex: Int = 0, step: Int = 1,
     ): Int {
-        require(direction != 0)
+        require(step != 0)
         var i = startIndex
         while (i in 0 until size) {
             if (delegate == itemDelegates[i])
                 return i
-            i += direction
+            i += step
         }
         return -1
     }
@@ -101,37 +101,37 @@ inline fun Delegapter(
 
 inline fun Delegapter.findIndexOf(
     delegate: (AdapterDelegate<*, *>) -> Boolean, item: (Any?) -> Boolean = { true },
-    startIndex: Int = 0, direction: Int = 1,
+    startIndex: Int = 0, step: Int = 1,
 ): Int {
-    require(direction != 0)
+    require(step != 0)
     var i = startIndex
     while (i in 0 until size) {
         if (delegate(delegateAt(i)) && item(itemAt(i)))
             return i
-        i += direction
+        i += step
     }
     return -1
 }
 
 inline fun <T> Delegapter.findIndexOfBy(
     delegate: AdapterDelegate<T, *>, item: (T) -> Boolean = { true },
-    startIndex: Int = 0, direction: Int = 1,
+    startIndex: Int = 0, step: Int = 1,
 ): Int {
-    require(direction != 0)
+    require(step != 0)
     var i = startIndex
     while (i in 0 until size) {
         if (delegate == delegateAt(i) && item(itemAt(i) as T))
             return i
-        i += direction
+        i += step
     }
     return -1
 }
 
 inline fun <T> Delegapter.findBy(
     delegate: AdapterDelegate<T, *>, item: (T) -> Boolean = { true },
-    startIndex: Int = 0, direction: Int = 1,
+    startIndex: Int = 0, step: Int = 1,
 ): T? {
-    val i = findIndexOfBy(delegate, item, startIndex, direction)
+    val i = findIndexOfBy(delegate, item, startIndex, step)
     return if (i < 0) null else itemAt(i) as T
 }
 
