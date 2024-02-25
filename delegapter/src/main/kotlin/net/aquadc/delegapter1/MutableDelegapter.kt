@@ -126,8 +126,8 @@ class MutableDelegapter(
     private val ViewType.actual
         get() = if (this is VHFMaxScrap) this.factory else this
 
-    fun remove(element: Any?): Boolean {
-        val iof = items.indexOf(element)
+    fun remove(item: Any?): Boolean {
+        val iof = items.indexOf(item)
         return if (iof < 0) false else { removeAt(iof); true }
     }
     fun removeAt(position: Int) {
@@ -140,10 +140,10 @@ class MutableDelegapter(
         itemDelegates.removeRange(start, endEx)
         target.onRemoved(start, endEx - start)
     }
-    fun removeAll(elements: Collection<Any?>): Boolean = batchRemove(elements, false)
-    fun retainAll(elements: Collection<Any?>): Boolean = batchRemove(elements, true)
-    private fun batchRemove(elements: Collection<Any?>, complement: Boolean): Boolean =
-        batchRemoveIf { elements.contains(items[it]) != complement }
+    fun removeAll(items: Collection<Any?>): Boolean = batchRemove(items, false)
+    fun retainAll(items: Collection<Any?>): Boolean = batchRemove(items, true)
+    private fun batchRemove(items: Collection<Any?>, complement: Boolean): Boolean =
+        batchRemoveIf { items.contains(this.items[it]) != complement }
     @JvmName("removeAllBy") fun removeAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, false)
     @JvmName("retainAllBy") fun retainAll(delegate: AdapterDelegate<*, *>): Boolean = batchRemoveBy(delegate, true)
     private fun batchRemoveBy(delegate: AdapterDelegate<*, *>, complement: Boolean): Boolean =
