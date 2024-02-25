@@ -27,9 +27,6 @@ abstract class Delegapter protected constructor(initialItemCapacity: Int) {
     val size: Int
         get() = items.size
 
-    val isEmpty: Boolean
-        get() = items.isEmpty()
-
     fun itemAt(position: Int): Any? =
         items[position]
 
@@ -137,6 +134,9 @@ inline fun <T> Delegapter.findBy(
     val i = findIndexOfBy(delegate, item, startIndex, direction)
     return if (i < 0) null else itemAt(i) as T
 }
+
+inline val Delegapter.isEmpty: Boolean
+    get() = size == 0
 
 inline val Delegapter.lastIndex: Int
     get() = size - 1
