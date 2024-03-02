@@ -75,7 +75,7 @@ fun <T, D : Diff<T>?> AdapterDelegate<T, D>.background(drawable: Drawable): Adap
 /**
  * Create new [ViewType] by adding margin to [RecyclerView.ViewHolder.itemView].
  */
-fun ViewType.withMargins(
+fun ViewType.plusMargins(
     @Px left: Int = 0, @Px top: Int = 0, @Px right: Int = 0, @Px bottom: Int = 0,
 ): ViewType =
     if (left or top or right or bottom == 0) this
@@ -104,7 +104,7 @@ fun ViewType.withMargins(
 /**
  * Create new [AdapterDelegate] by adding margin to [RecyclerView.ViewHolder.itemView].
  */
-fun <T, D : Diff<T>?> AdapterDelegate<T, D>.withMargins(
+fun <T, D : Diff<T>?> AdapterDelegate<T, D>.plusMargins(
     @Px left: Int = 0, @Px top: Int = 0, @Px right: Int = 0, @Px bottom: Int = 0,
 ): AdapterDelegate<T, D> =
-    copy(create = create.withMargins(left, top, right, bottom) )
+    copy(create = create.plusMargins(left, top, right, bottom) )
