@@ -53,6 +53,16 @@ inline fun <T, D : Diff<in T>?> AdapterDelegate<T, D>.copy(
     if (this.create === create) this
     else AdapterDelegateDecorator(create, diff, this)
 
+/**
+ * Decorate [ViewHolder factory][AdapterDelegate.create] with a [block].
+ * see ViewType.then(block)
+ * see AdapterDelegate.copy(ViewType)
+ */
+inline fun <T, D : Diff<in T?>> AdapterDelegate<T, D>.afterCreate(
+    noinline block: RecyclerView.ViewHolder.() -> Unit,
+): AdapterDelegate<T, D> =
+    AdapterDelegateDecorator(create.then(block), diff, this)
+
 private fun <R, T> Diff<R>.unmap(transform: (T) -> R): Diff<T> = object : DiffUtil.ItemCallback<T>() {
     override fun areItemsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
         val old = transform(oldItem); val new = transform(newItem)
