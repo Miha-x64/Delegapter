@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import net.aquadc.delegapter1.MutableDelegapter
 import net.aquadc.delegapter1.VH
 import net.aquadc.delegapter1.bind
+import net.aquadc.delegapter1.maxRecycledViews
 
 
 @JvmName("delegated")
@@ -24,6 +25,4 @@ inline fun DelegatedAdapter(
 @Suppress("FunctionName")
 @JvmName("singleItem")
 fun SingleItemAdapter(view: View): RecyclerView.Adapter<*> =
-    RepeatAdapter({ _: ViewGroup -> VH(view) }.bind(), 1)
-
-
+    RepeatAdapter({ _: ViewGroup -> VH(view) }.maxRecycledViews(0).bind(), 1)
