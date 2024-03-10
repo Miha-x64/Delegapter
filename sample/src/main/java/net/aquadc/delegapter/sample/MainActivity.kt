@@ -17,16 +17,21 @@ import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import net.aquadc.delegapter.Delegapter
-import net.aquadc.delegapter.VH
-import net.aquadc.delegapter.adapter.DelegatedAdapter
-import net.aquadc.delegapter.decor.BoundsNegotiation
-import net.aquadc.delegapter.decor.decor
-import net.aquadc.delegapter.diff
 import net.aquadc.delegapter.equate
 import net.aquadc.delegapter.equateBy
 import net.aquadc.delegapter.invoke
-import net.aquadc.delegapter.spanSizeLookup
+import net.aquadc.delegapter1.Delegapter
+import net.aquadc.delegapter1.VH
+import net.aquadc.delegapter1.adapter.DelegatedAdapter
+import net.aquadc.delegapter1.bind
+import net.aquadc.delegapter1.decor.ItemDecoration
+import net.aquadc.delegapter1.decor.anyViewHolder
+import net.aquadc.delegapter1.decor.ifFollowing
+import net.aquadc.delegapter1.decor.ifPreceding
+import net.aquadc.delegapter1.decor.item
+import net.aquadc.delegapter1.decor.viewHolderIs
+import net.aquadc.delegapter1.diff
+import net.aquadc.delegapter1.spanSizeLookup
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -69,7 +74,7 @@ class MainActivity : Activity() {
                 this.adapter = adapter
                 val orientation = RecyclerView.VERTICAL
                 layoutManager = GridLayoutManager(context, 4, orientation, false).apply {
-                    spanSizeLookup = adapter.data.spanSizeLookup { _, _, delegate ->
+                    spanSizeLookup = adapter.data.spanSizeLookup { _, delegate, _ ->
                         if (delegate == titleDelegate) spanCount else 1
                     }
 
@@ -77,25 +82,25 @@ class MainActivity : Activity() {
                     // Reuse viewHolders, if shared.
                     recycleChildrenOnDetach = true
                 }
-                addItemDecoration(adapter.data.decor(orientation, debugSpaces = true) {
-                    around({ it === titleDelegate }, size = 24) // 24dp before and after each title
+                addItemDecoration(ItemDecoration(debugOffsets = true) {
+                    size(24) // 24dp before and after each title
+                        .aside(viewHolderIs<TitleVH>(), Gravity.TOP)
+                        .aside(viewHolderIs<TitleVH>(), Gravity.BOTTOM)
 
-                    between( // divider after title
-                        { it === titleDelegate }, { it !== titleDelegate },
-                        size = 1, drawable = ColorDrawable(Color.BLACK),
-                        viewBoundsNegotiation = BoundsNegotiation.Outer,
-                    )
+                    size(1).draw(ColorDrawable(Color.BLACK)) // divider after title
+                        .aside(item { it is TitleVH }
+                            .ifFollowing({ it < adapter.data.size }, { it != null }),
+                            Gravity.BOTTOM)
 
-                    between({ true }, size = 8) // 8dp between any two items
+                    size(8) // FIXME you can't use ifFollowing with ItemDecorations!
+                        .aside(anyViewHolder.ifPreceding({ it >= 0 }, { it !== null }), Gravity.BOTTOM) // 8dp between any two items
 
-                    between( // divider before footer
-                        { it !== titleDelegate }, { it === titleDelegate },
-                        drawable = GradientDrawable().apply {
-                            setColor(Color.BLACK)
-                            setSize(0, max(1, resources.displayMetrics.density.roundToInt()))
-                        },
-                        viewBoundsNegotiation = BoundsNegotiation.Outer,
-                    )
+                    draw(GradientDrawable().apply {
+                        setColor(Color.BLACK)
+                        setSize(0, max(1, resources.displayMetrics.density.roundToInt()))
+                    }) // divider before footer
+                        .aside(viewHolderIs<TitleVH>()
+                            .ifPreceding({ it >= 0 }, { it != null }), Gravity.TOP)
                 })
             }
 
@@ -121,26 +126,29 @@ private val COLORS = intArrayOf(
     Color.YELLOW,
 )
 
+class TitleVH(view: TextView) : VH<TextView, Nothing?>(view, null)
 val titleDelegate = "title" { parent: ViewGroup ->
-    VH<TextView, CharSequence>(TextView(parent.context).apply {
+    TitleVH(TextView(parent.context).apply {
         layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
         textSize = 18f
         setTextColor(Color.BLACK)
         gravity = Gravity.CENTER_HORIZONTAL
-    }, TextView::setText)
-}.diff(equate())
+    })
+}.bind { item: CharSequence, _ ->
+    view.setText(item)
+}.diff(areItemsTheSame = equate())
 
 val iconDelegate = "icon" { parent: ViewGroup ->
     val d = GradientDrawable().apply {
         val dp = parent.resources.displayMetrics.density
         setSize((64 * dp).toInt(), (64 * dp).toInt())
     }
-    VH<ImageView, GradientDrawable, Pair<Float, Int>>(ImageView(parent.context).apply {
+    VH(ImageView(parent.context).apply {
         layoutParams = RecyclerView.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
         setImageDrawable(d)
-    }, d) { (radius: Float, color: Int), _, _ ->
-        val dp = parent.resources.displayMetrics.density
-        binding.cornerRadius = radius * dp
-        binding.setColor(color)
-    }
+    }, d)
+}.bind { (radius: Float, color: Int): Pair<Float, Int>, _ ->
+    val dp = view.resources.displayMetrics.density
+    binding.cornerRadius = radius * dp
+    binding.setColor(color)
 }.diff(equateBy(Pair<Float, *>::first))

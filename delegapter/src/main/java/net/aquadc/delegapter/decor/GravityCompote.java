@@ -41,11 +41,10 @@ import static android.view.Gravity.TOP;
  * Standard constants and tools for placing an object within a potentially
  * larger container.
  */
-/*Mike-CHANGED public to package-private final*/
-final class GravityCompote /*Mike-ADDED some compote 🍷*/ {
+public /*Mike-ADDED final*/ final class GravityCompote /*Mike-ADDED some compote 🍷*/ {
 
     // Mike-BORROWED android.view.Gravity.GravityFlags
-    @Retention(RetentionPolicy.SOURCE)
+    @Retention(RetentionPolicy.CLASS /* Mike-CHANGED from SOURCE */)
     @IntDef(flag = true, value = {
         FILL,
         FILL_HORIZONTAL,
@@ -64,11 +63,18 @@ final class GravityCompote /*Mike-ADDED some compote 🍷*/ {
         CLIP_VERTICAL,
 // Mike-REMOVED NO_GRAVITY (useless)
     })
-    /*Mike-CHANGED to package-private instead of @hide*/ @interface GravityFlags {
+    /*Mike-REMOVED @hide*/ public @interface GravityFlags {
     }
 
+    // Mike-ADDED SideGravity
+    @Retention(RetentionPolicy.CLASS)
+    @IntDef({ START, END, LEFT, RIGHT, TOP, BOTTOM })
+    // TODO @Target
+    public @interface SideGravity { }
+    // END Mike-ADDED
+
     // Mike-BORROWED android.view.Gravity#toString
-    /*Mike-CHANGED to package-private instead of @hide*/ static String toString(int gravity) {
+    /*Mike-REMOVED @hide*/ public static String toString(int gravity) {
         final StringBuilder result = new StringBuilder();
         if ((gravity & FILL) == FILL) {
             result.append("FILL").append(' ');
@@ -108,9 +114,12 @@ final class GravityCompote /*Mike-ADDED some compote 🍷*/ {
                 result.append("CENTER").append('_').append("HORIZONTAL").append(' '); // Mike-CHANGED split string
             }
         }
-        // Mike-REMOVED "NO GRAVITY" option
+        if (result.length() == 0) {
+            result.append("NO GRAVITY").append(' ');
+        }
         // Mike-REMOVED DISPLAY_CLIP_ handling
-        // Mike-ADDED CLIP_ handling
+
+        /*// Mike-ADDED CLIP_ handling
         if ((gravity & (CLIP_VERTICAL | CLIP_HORIZONTAL)) == (CLIP_VERTICAL | CLIP_HORIZONTAL)) {
             result.append("CLIP").append(' ');
         } else {
@@ -121,7 +130,8 @@ final class GravityCompote /*Mike-ADDED some compote 🍷*/ {
                 result.append("CLIP").append('_').append("HORIZONTAL").append(' '); // Mike-CHANGED split string
             }
         }
-        // END Mike-ADDED
+        // END Mike-ADDED*/
+
         result.deleteCharAt(result.length() - 1);
         return result.toString();
     }

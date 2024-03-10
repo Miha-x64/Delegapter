@@ -26,12 +26,12 @@ import java.lang.annotation.RetentionPolicy;
 import static android.util.TypedValue.*;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
-final class ComplexDimension {
+public final class ComplexDimension {
 
     // Mike-BORROWED android.util.TypedValue.ComplexDimensionUnit
     @IntDef({COMPLEX_UNIT_PX, COMPLEX_UNIT_DIP, COMPLEX_UNIT_SP, COMPLEX_UNIT_PT, COMPLEX_UNIT_IN, COMPLEX_UNIT_MM})
     @Retention(RetentionPolicy.SOURCE)
-    /*Mike-CHANGED to package-private instead of @hide*/ @interface ComplexDimensionUnit {
+    /*Mike-REMOVED @hide*/ public @interface ComplexDimensionUnit {
     }
 
     // Mike-BORROWED android.util.TypedValue#createComplexDimension(int, int)
