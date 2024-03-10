@@ -123,7 +123,7 @@ import kotlin.reflect.typeOf
  * wrapped in [View.OnClickListener] to [RecyclerView.ViewHolder.itemView].
  * Has some extra overhead for tracking bound items.
  */
-@JvmName("onClickWithItem") fun <T, D : Diff<in T>?> AdapterDelegate<T, D>.`onClickWithItem for Java`(
+@JvmName("onClickWithItem") fun <T, D : Diff<in T>?> AdapterDelegate<T, D>.`onClickWithItem_4J`(
     withItem: RecyclerView.ViewHolder.(item: T) -> Unit,
 ): AdapterDelegate<T, D> {
     val bound = WeakIdentityHashMap<RecyclerView.ViewHolder, T>()
