@@ -2,7 +2,6 @@ package net.aquadc.delegapter1.adapter
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import net.aquadc.delegapter1.AdapterDelegate
 import net.aquadc.delegapter1.Delegapter
 import net.aquadc.delegapter1.MutableDelegapter
 
@@ -30,10 +29,10 @@ open class DelegatedAdapter @JvmOverloads constructor(
         throw AssertionError()
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>): Unit =
-        (data.delegateAt(position) as AdapterDelegate<Any?, *>).bind(holder, data.itemAt(position), payloads)
+        data.bindViewHolder(holder, position, payloads)
 
-    override fun onViewRecycled(holder: RecyclerView.ViewHolder): Unit =
-        data.delegateAt(holder.bindingAdapterPosition).recycled(holder)
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) =
+        data.recycled(holder)
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         recyclerView.setRecycledViewPool(data.recycledViewPool)

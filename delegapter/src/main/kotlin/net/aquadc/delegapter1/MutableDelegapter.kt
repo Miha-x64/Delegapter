@@ -66,6 +66,10 @@ class MutableDelegapter(
         }
     }
 
+    private val boundBy = HashMap<RecyclerView.ViewHolder, AdapterDelegate<*, *>>(
+        if (initialDelegateCapacity < 0) 16 else initialDelegateCapacity
+    )
+
     // configure like a MutableList
 
     override fun <D> add(delegate: AdapterDelegate<D, Diff<D>>, item: D, atIndex: Int): Unit =
@@ -264,6 +268,15 @@ class MutableDelegapter(
     fun forceViewTypeOf(delegate: AdapterDelegate<*, *>): Int {
         tryAddDelegate(delegate)
         return viewTypeMap[delegate.create.actual]!!
+    }
+
+    fun bindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: List<Any>) {
+        val ad = delegateAt(position) as AdapterDelegate<Any?, *>
+        ad.bind(holder, itemAt(position), payloads)
+        boundBy[holder] = ad
+    }
+    fun recycled(holder: RecyclerView.ViewHolder) {
+        boundBy.remove(holder)!!.recycled(holder)
     }
 
 }
